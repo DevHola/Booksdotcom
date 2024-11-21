@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema, model, Model } from "mongoose";
 interface IRating extends Document {
     rateNumber: Number
-    text?: String
+    review?: String
     product: String
     user: String
 }
@@ -11,7 +11,7 @@ const RatingSchema = new Schema<IRating>({
         required: true,
         default: 0
     },
-    text: {
+    review: {
         type: String
     },
     product: {
