@@ -1,11 +1,15 @@
 import mongoose from "mongoose";
-const uri = process.env.MONGOURI as string
-mongoose.connect(uri)
-const db = mongoose.connection
-db.on('open', () => {
-    console.log('Connected')
-})
-db.on('error', () => {
-    console.log('Connection failed')
-})
-export default db
+
+const uri = process.env.MONGOURI as string;
+
+const connection = async (uri: string) => {
+    await mongoose.connect(uri, {
+    }).then(() => {
+      console.log('Connected to MongoDB');
+    }).catch(err => {
+      console.error('Connection to MongoDB failed', err);
+    });
+    
+}
+
+export default connection 

@@ -3,6 +3,7 @@ import cors from 'cors'
 import morgan from 'morgan'
 import dotenv from 'dotenv'
 import path from 'path'
+import connection from './configs/connection'
 dotenv.config({path: path.join(__dirname, '.env')})
 const app: Application = express()
 app.use(cors())
@@ -16,4 +17,11 @@ app.use((error:Error, req:Request, res:Response, next:NextFunction) => {
         ...(isProduction ? null : { stack: error.stack })
     })
 })
-export default app
+const startApp = async (PORT: string) => {
+    const uri = process.env.MONGOURI as string;
+    connection(uri)
+    app.listen(PORT, () => {
+        console.log(`Express is listening at http://localhost:${PORT}`)
+    })    
+}
+export default startApp
