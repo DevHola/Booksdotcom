@@ -2,7 +2,13 @@ import nodemailer from 'nodemailer'
 const host = process.env.MAIL_HOST
 const user = process.env.MAIL_USER
 const pass = process.env.MAIL_PASS
-export const reusableMail = async (data: any) => {
+export interface mail{
+  from: string
+  to: string
+  subject: string
+  content: string
+}
+export const reusableMail = async (data: mail) => {
   try {
     const transporter = nodemailer.createTransport({
       host,

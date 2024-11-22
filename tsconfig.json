@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es2020",                          
+    "strictPropertyInitialization": false,
+    "target": "ES2021",                          
     "module": "commonjs",                    
     "lib": ["es6"],                     
     "allowJs": true,
@@ -9,6 +10,8 @@
     "strict": true,         
     "noImplicitAny": true,
     "esModuleInterop": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "typeRoots": ["./node_modules/@types", "src/@types"],  
+    "types": ["node", "express"]  
   }
 }

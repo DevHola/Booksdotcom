@@ -1,5 +1,5 @@
 import {Schema, model, Document, Model} from 'mongoose'
-interface ICategory extends Document {
+export interface ICategory extends Document {
     _id: String
     name: String
 }

@@ -1,6 +1,7 @@
 import UserModel, { IUser } from "../models/User.model"
 import argon2 from 'argon2'
 import jwt from 'jsonwebtoken'
+import { mail } from "../configs/delivermail"
 export const registerUser = async (data: IUser): Promise<string> => {
     const hash = await argon2.hash(data.password)
     const user = await UserModel.create({
@@ -42,6 +43,10 @@ export const ValidateUserPassword = async (password:string, email: string): Prom
         throw new Error('Token generation failed');
     }
 }
+export const getUserById = async (id: string): Promise<IUser> => {
+    const user = await UserModel.findOne({ _id: id }, { _id: 1, username: 1, email: 1, role: 1, isverified: 1 })
+    return user as IUser 
+}
 export const generateToken = async (data:IUser, type: string): Promise<string | null> => {
     const userdata = {id: data._id,email: data.email,role: data.role}
     switch (type) {
@@ -61,7 +66,7 @@ export const generateToken = async (data:IUser, type: string): Promise<string | 
 }
 export const changePassword = async (id: string, password: string) => {
     const hash = argon2.hash(password)
-    await UserModel.findByIdAndUpdate(id, { password: hash}) 
+    await UserModel.findOneAndUpdate({ _id: id }, { $set: { password: hash }}, { upsert: true }) 
 }
 export const verifyResetToken = async (token:string): Promise<string> => {
     const decoded = await jwt.verify(token, process.env.RESET_PUBLIC_SECRET as string, {  algorithms:['HS256']}) as IUser
@@ -86,8 +91,86 @@ export const extractor = async (req:any): Promise<string> => {
         }
     
 }
+export const Resetpasswordmail = async (resettoken: string, email: string): Promise<mail> => {
+    const url = `${process.env.FRONTEND_URL}/auth/token=${resettoken}`
+    const content = `<!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Password Reset</title>
+              <style>
+                  body {
+                      font-family: Arial, sans-serif;
+                      background-color: #f4f4f4;
+                      margin: 0;
+                      padding: 0;
+                  }
+                  .container {
+                      max-width: 600px;
+                      margin: 0 auto;
+                      background-color: #ffffff;
+                      padding: 20px;
+                      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                  }
+                  .header {
+                      text-align: center;
+                      padding: 10px 0;
+                      background-color: #007bff;
+                      color: #ffffff;
+                  }
+                  .content {
+                      padding: 20px;
+                  }
+                  .button {
+                      display: inline-block;
+                      padding: 10px 20px;
+                      color: #ffffff;
+                      background-color: #007bff;
+                      text-decoration: none;
+                      border-radius: 4px;
+                      text-align: center;
+                  }
+                  .footer {
+                      text-align: center;
+                      padding: 10px 0;
+                      background-color: #f4f4f4;
+                      color: #777777;
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <div class="header">
+                      <h1>Password Reset Request</h1>
+                  </div>
+                  <div class="content">
+                      <p>Hello,</p>
+                      <p>We received a request to reset your password. Click the button below to reset your password:</p>
+                      <p>
+                          <a href="${url}" class="button">Reset Password</a>
+                      </p>
+                      <p>If you did not request a password reset, please ignore this email or contact support if you have questions.</p>
+                      <p>Thank you,<br>The Team</p>
+                  </div>
+                  <div class="footer">
+                      <p>&copy; 2024 Your Company. All rights reserved.</p>
+                  </div>
+              </div>
+          </body>
+          </html>`
+    const subject = 'ACCOUNT PASSWORD RESET'
+    const from = process.env.FROM ?? 'no-reply@yourcompany.com'
+    const data: mail = {
+      to: email,
+      content,
+      subject,
+      from
+    }
+    return data
+  }
 // LOGIN:
 // REGISTER:
 // FORGET:
 // RESET:
-// MAIL: FOR RESET FORGET TOKEN 
+// MAIL:
