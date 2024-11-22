@@ -46,13 +46,13 @@ export const generateToken = async (data:IUser, type: string): Promise<string | 
     const userdata = {id: data._id,email: data.email,role: data.role}
     switch (type) {
         case 'verification':
-            return await jwt.sign(userdata, process.env.SECRET as string, { algorithm: 'RS256', expiresIn: '600' })
+            return await jwt.sign(userdata, process.env.VERIFY_PRIVATE_SECRET as string, { algorithm: 'RS256', expiresIn: '600' })
             break;
         case 'login':
-            return await jwt.sign(userdata, process.env.SECRET as string, { algorithm: 'RS256', expiresIn: '600' })
+            return await jwt.sign(userdata, process.env.AUTH_ACCESS_PRIVATE_SECRET as string, { algorithm: 'RS256', expiresIn: '900' })
             break;
         case 'reset':
-            return await jwt.sign(userdata, process.env.RESETSECRET as string, { algorithm: 'RS256', expiresIn: '600' })
+            return await jwt.sign(userdata, process.env.RESET_PRIVATE_SECRET as string, { algorithm: 'RS256', expiresIn: '600' })
             break;
         default:
             return null
@@ -90,3 +90,4 @@ export const extractor = async (req:any): Promise<string> => {
 // REGISTER:
 // FORGET:
 // RESET:
+// MAIL: FOR RESET FORGET TOKEN 
