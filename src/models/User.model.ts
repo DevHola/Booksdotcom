@@ -1,10 +1,10 @@
 import {Document, Model, Schema, model} from "mongoose";
 import argon2 from "argon2";
-interface IUser extends Document{
+export interface IUser extends Document{
     username: string
     email: string
     role: string
-    isverified: boolean
+    isverified?: boolean
     password: string
 }
 const Userschema = new Schema<IUser>({

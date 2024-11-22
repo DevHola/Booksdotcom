@@ -12,7 +12,7 @@ app.use(express.json())
 app.use(express.urlencoded({extended: false}))
 app.use((error:Error, req:Request, res:Response, next:NextFunction) => {
     const isProduction =  process.env.NODE_ENV === "production"
-    res.status(500).json({
+     res.status(500).json({
         message: isProduction ? "An error occured" : error.stack,
         ...(isProduction ? null : { stack: error.stack })
     })
