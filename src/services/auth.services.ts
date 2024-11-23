@@ -1,14 +1,14 @@
 import UserModel, { IUser } from "../models/User.model"
-import argon2 from 'argon2'
+import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { mail } from "../configs/delivermail"
 export const registerUser = async (data: IUser): Promise<string> => {
-    const hash = await argon2.hash(data.password)
+    // const hash = await bcrypt.hash(data.password, 20)
     const user = await UserModel.create({
         username: data.username,
         email: data.email,
         role: data.role,
-        password: hash
+        password: data.password
     })
     await user.save()
     const authtoken = await generateToken(data, 'verification')   
@@ -25,18 +25,21 @@ export const UserByEmail = async (email:string): Promise<IUser> => {
     }
     return user as IUser
 } 
-export const ValidateUserPassword = async (password:string, email: string): Promise<string> => {
+export const ValidateUserPassword = async (email: string, password:string): Promise<string> => {
     const result  = await UserModel.findOne({email})
     if(!result){
         throw new Error('authentication failed')
     }
     const user = result as IUser
-    const verify = await argon2.verify(user.password, password) 
+    const hash = user.password
+    const verify = await bcrypt.compare(password, hash)
+    console.log(verify, password) 
     if(!verify)  {
         throw new Error('authentication failed');
     }
     const data = { _id:user._id, email, role: user.role } as IUser
-    const token = await generateToken(data, 'registration')   
+    console.log(data)
+    const token = await generateToken(data, 'login')   
     if (token) {
         return token;
     } else {
@@ -54,10 +57,10 @@ export const generateToken = async (data:IUser, type: string): Promise<string | 
             return await jwt.sign(userdata, process.env.VERIFY_PRIVATE_SECRET as string, { algorithm: 'RS256', expiresIn: '600' })
             break;
         case 'login':
-            return await jwt.sign(userdata, process.env.AUTH_ACCESS_PRIVATE_SECRET as string, { algorithm: 'RS256', expiresIn: '900' })
+            return await jwt.sign(userdata, process.env.AUTH_ACCESS_PRIVATE_SECRET as string, { algorithm: 'RS256', expiresIn: process.env.AUTH_TOKEN_EXPIRY as string })
             break;
         case 'reset':
-            return await jwt.sign(userdata, process.env.RESET_PRIVATE_SECRET as string, { algorithm: 'RS256', expiresIn: '600' })
+            return await jwt.sign(userdata, process.env.RESET_PRIVATE_SECRET as string, { algorithm: 'RS256', expiresIn: process.env.AUTH_TOKEN_EXPIRY as string })
             break;
         default:
             return null
@@ -65,11 +68,12 @@ export const generateToken = async (data:IUser, type: string): Promise<string | 
     }
 }
 export const changePassword = async (id: string, password: string) => {
-    const hash = argon2.hash(password)
+   console.log(password)
+    const hash = await bcrypt.hash(password, 10)
     await UserModel.findOneAndUpdate({ _id: id }, { $set: { password: hash }}, { upsert: true }) 
 }
 export const verifyResetToken = async (token:string): Promise<string> => {
-    const decoded = await jwt.verify(token, process.env.RESET_PUBLIC_SECRET as string, {  algorithms:['HS256']}) as IUser
+    const decoded = await jwt.verify(token, process.env.RESET_PUBLIC_SECRET as string, {  algorithms:['RS256'] }) as IUser
     const user = await UserByEmail(decoded.email)
     if(!user) {
         throw new Error('authentication failed');
@@ -174,3 +178,5 @@ export const Resetpasswordmail = async (resettoken: string, email: string): Prom
 // FORGET:
 // RESET:
 // MAIL:
+// VERIFICATION:-
+// PROFILE:-

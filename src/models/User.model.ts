@@ -1,5 +1,5 @@
 import {Document, Model, Schema, model} from "mongoose";
-import argon2 from "argon2";
+import bcrypt from 'bcrypt'
 export interface IUser extends Document{
     username: string
     email: string
@@ -23,7 +23,6 @@ const Userschema = new Schema<IUser>({
     role: {
         type: String,
         required: true,
-        enum: ['','',''],
         lowercase: true
     },
     isverified: {
@@ -41,7 +40,7 @@ Userschema.pre('save', async function (this: IUser, next) {
     const user = this as IUser
     if (user.isModified('password')) {
         try {
-            user.password = await argon2.hash(user.password);
+            user.password = await bcrypt.hash(user.password, 10);
             next();
         } catch (err) {
             if(err instanceof Error){

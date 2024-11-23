@@ -43,18 +43,16 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
     if (token.length > 0) {
        return res.status(200).json({
         status: true,
-        token
+        token: token
       })
     } else {
-      return res.status(401).json({
-        message: 'Incorrect credentials'
-      })
+      throw new Error('authentication failed')
     }
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === 'authentication failed') {
         return res.status(401).json({
-          message: 'Incorrect credentials'
+          message: 'authentication failed'
         })
       } else {
         next(error)
@@ -74,8 +72,9 @@ export const forgetPassword = async (req: Request, res: Response, next: NextFunc
     const user = await UserByEmail(email as string)
     const token = await generateToken(user, 'reset')
     if(token){
+      console.log(token)
       const data = await Resetpasswordmail(token, email)
-      reusableMail(data)
+      // reusableMail(data)
       return res.status(200).json({
         message: `Reset mail sent to ${email}`
       })
@@ -103,10 +102,11 @@ export const ResetPassword = async (req: Request, res: Response, next: NextFunct
     const { password } = req.body
     const token = await extractor(req)
     const userId = await verifyResetToken(token)
-    if (userId.length > 0) {
-      await changePassword(userId, password as string)
+    if (userId) {
+      await changePassword(userId.toString(), password)
       return res.status(200).json({
-        message: 'Password Resetted'
+        message: 'Password Resetted',
+        status: true
       })
     }
   } catch (error) {
@@ -121,13 +121,15 @@ export const ResetPassword = async (req: Request, res: Response, next: NextFunct
     }
   }
 }
-const authUser = async (req: Request, res: Response, next: NextFunction) => {
+export const authUser = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
     if(req.user){
       const userdata = req.user as DecodedToken
       const id = userdata.id
-      const user = getUserById(id)
-      return res.status(200).json(user)
+      const user = await getUserById(id)
+      return res.status(200).json({
+        user
+      })
     }
   } catch (error) {
     next(error)

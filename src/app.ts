@@ -1,15 +1,15 @@
+import dotenv from 'dotenv'
+import path from 'path'
+dotenv.config({ path: path.join(__dirname, '.env') })
 import express, { type Application, type Request, type Response, type NextFunction } from 'express'
 import cors from 'cors'
 import morgan from 'morgan'
-import dotenv from 'dotenv'
-import path from 'path'
 import helmet from 'helmet'
 import passport from 'passport'
 import JWTStrategy from './middlewares/passport'
 import connection from './configs/connection'
 import AuthRouter from './routes/auth.route'
 import categoryRouter from './routes/category.route'
-dotenv.config({ path: path.join(__dirname, '.env') })
 const app: Application = express()
 app.use(cors())
 app.use(morgan('dev'))
