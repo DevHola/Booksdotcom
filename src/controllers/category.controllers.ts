@@ -11,7 +11,7 @@ export const createCategory = async (req: Request, res: Response, next: NextFunc
     }
     try {
         const { name } = req.body
-        await NewCategory(name)
+        await NewCategory(name as string)
         return res.status(200).json({
             message: 'category created'
         })
@@ -47,8 +47,9 @@ export const GetCategoryByName = async (req: Request, res: Response, next: NextF
     }
     try {
         const { name } = req.body
-        const category = getCategoryByName(name as string)
-        return res.status(200).json(category)
+        const category = await getCategoryByName(name as string)
+        console.log(category)
+        return res.status(200).json({category})
     } catch (error) {
         next(error)
     }
@@ -63,7 +64,7 @@ export const GetCategoryById = async (req: Request, res: Response, next: NextFun
     }
     try {
         const id = req.params.id as string
-        const category = getCategoryByID(id)
+        const category = await getCategoryByID(id)
         return res.status(200).json(category)
     } catch (error) {
         next(error)

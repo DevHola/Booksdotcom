@@ -1,11 +1,11 @@
 import {Schema, model, Document, Model} from 'mongoose'
 export interface ICategory extends Document {
-    _id: String
     name: String
 }
 const CategorySchema = new Schema<ICategory>({
     name: {
         type: String,
+        required: true,
         unique: true,
         lowercase: true
     }
