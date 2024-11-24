@@ -6,7 +6,7 @@ import cors from 'cors'
 import morgan from 'morgan'
 import helmet from 'helmet'
 import passport from 'passport'
-import JWTStrategy from './middlewares/passport'
+import JWTStrategy, { GGstrategy } from './middlewares/passport'
 import connection from './configs/connection'
 import AuthRouter from './routes/auth.route'
 import categoryRouter from './routes/category.route'
@@ -19,6 +19,7 @@ app.use(helmet())
 app.disable('x-powered-by')
 app.use(passport.initialize())
 passport.use(JWTStrategy)
+passport.use(GGstrategy)
 app.use((error: Error, req: Request, res: Response, next: NextFunction): any => {
   const isProduction = process.env.NODE_ENV === 'production'
   return res.status(500).json({

@@ -3,9 +3,12 @@ import bcrypt from 'bcrypt'
 export interface IUser extends Document{
     username: string
     email: string
-    role: string
+    role?: string
     isverified?: boolean
-    password: string
+    password?: string
+    provider: string
+    provider_id?: string
+    otp?: string
 }
 const Userschema = new Schema<IUser>({
     username: {
@@ -22,7 +25,6 @@ const Userschema = new Schema<IUser>({
     },
     role: {
         type: String,
-        required: true,
         lowercase: true
     },
     isverified: {
@@ -32,7 +34,18 @@ const Userschema = new Schema<IUser>({
     },
     password: {
         type: String,
-        required: true
+    },
+    provider: {
+        type: String,
+        enum: ['local','google'],
+        default: 'local'
+    },
+    provider_id: {
+        type: String,
+    },
+    otp: {
+        type: String,
+        default: null
     }
 
 }, {timestamps: true})
@@ -40,7 +53,7 @@ Userschema.pre('save', async function (this: IUser, next) {
     const user = this as IUser
     if (user.isModified('password')) {
         try {
-            user.password = await bcrypt.hash(user.password, 10);
+            user.password = await bcrypt.hash(user.password as string, 10);
             next();
         } catch (err) {
             if(err instanceof Error){
