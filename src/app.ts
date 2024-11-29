@@ -10,6 +10,7 @@ import JWTStrategy, { GGstrategy } from './middlewares/passport'
 import connection from './configs/connection'
 import AuthRouter from './routes/auth.route'
 import categoryRouter from './routes/category.route'
+import productRouter from './routes/product.route'
 const app: Application = express()
 app.use(cors())
 app.use(morgan('dev'))
@@ -29,6 +30,7 @@ app.use((error: Error, req: Request, res: Response, next: NextFunction): any => 
 })
 app.use('/api/v1/auth', AuthRouter)
 app.use('/api/v1/category', categoryRouter)
+app.use('/api/v1/products', productRouter)
 const startApp = async (PORT: any) => {
   const uri: string = process.env.MONGOURI ?? ''
   if (!uri) {

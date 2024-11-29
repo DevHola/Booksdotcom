@@ -1,23 +1,30 @@
 import mongoose, {Document, Schema, Model, model} from "mongoose";
-interface IProduct extends Document {
-    name: String
-    desc: String
+import { ICategory } from "./category.model";
+export interface IProduct extends Document {
+    title: String
+    description: String
     ISBN: String
-    author: String
+    author: String[]
     price: Number
-    isDiscounted: Boolean
-    discountinPercent: Number
-    category: String
+    publisher: string
+    published_Date: Date
+    noOfPages: number
+    coverImage: String
+    averageRating?: Number
+    numberOfReviews?: Number
+    totalSold?: Number
+    isDiscounted?: Boolean
+    discountinPercent?: Number
+    categoryid: ICategory
     user: String    
 }
 const ProductSchema = new Schema<IProduct>({
-    name: {
+    title: {
         type: String,
-        unique: true,
         required: true,
         lowercase: true
     },
-    desc: {
+    description: {
         type: String,
         required: true,
         lowercase: true
@@ -28,14 +35,41 @@ const ProductSchema = new Schema<IProduct>({
         required: true,
         lowercase: true
     },
-    author: {
+    author: [{
         type: String,
         required: true,
         lowercase: true
-    },
+    }],
     price: {
         type: Number,
         required: true,
+        default: 0
+    },
+    publisher: {
+        type: String,
+        required: true
+    },
+    published_Date: {
+        type: Date,
+        required: true
+    },
+    noOfPages: {
+        type: Number,
+        required: true
+    },
+    coverImage: {
+        type: String
+    },
+    averageRating: {
+        type: Number,
+        default: 0
+    },
+    numberOfReviews: {
+        type: Number,
+        default: 0
+    },
+    totalSold: {
+        type: Number,
         default: 0
     },
     isDiscounted: {
@@ -48,7 +82,7 @@ const ProductSchema = new Schema<IProduct>({
         required: true,
         default: 0
     },
-    category: {
+    categoryid: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Categories'
     },

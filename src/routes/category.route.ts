@@ -1,5 +1,6 @@
 import express from 'express'
 import { createCategory, editACategory, GetCategories, GetCategoryById, GetCategoryByName } from '../controllers/category.controllers'
+import { createProduct, ProductByCategory, productById, productByTitle } from '../controllers/product.controllers'
 import passport from 'passport'
 const categoryRouter = express.Router()
 categoryRouter.post('/', passport.authenticate('jwt', { session: false }), createCategory)
