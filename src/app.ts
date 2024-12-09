@@ -11,6 +11,8 @@ import connection from './configs/connection'
 import AuthRouter from './routes/auth.route'
 import categoryRouter from './routes/category.route'
 import productRouter from './routes/product.route'
+import reviewRouter from './routes/review.route'
+import { seedcategory, seedproducts } from './models/seeders/seed'
 const app: Application = express()
 app.use(cors())
 app.use(morgan('dev'))
@@ -31,6 +33,7 @@ app.use((error: Error, req: Request, res: Response, next: NextFunction): any => 
 app.use('/api/v1/auth', AuthRouter)
 app.use('/api/v1/category', categoryRouter)
 app.use('/api/v1/products', productRouter)
+app.use('/api/v1/review', reviewRouter)
 const startApp = async (PORT: any) => {
   const uri: string = process.env.MONGOURI ?? ''
   if (!uri) {
@@ -38,6 +41,8 @@ const startApp = async (PORT: any) => {
     return;
   }
   void connection(uri)
+  // await seedcategory()
+  // await seedproducts()
   app.listen(PORT, () => {
     console.log(`Express is listening at http://localhost:${PORT}`)
   })

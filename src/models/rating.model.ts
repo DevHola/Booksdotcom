@@ -1,11 +1,18 @@
 import mongoose, { Document, Schema, model, Model } from "mongoose";
-import productModel from "./product.model";
-interface IRating extends Document {
+export interface IRating extends Document {
     rateNumber: Number
     review?: String
-    product: String
+    product?: String
     user: String
+    // addAndUpdateReview(rateNumber: number, review: string, product: string, user: string): Promise<IRating>; for methods & you need to create new instance to use it
 }
+interface IRatingModel extends Model<IRating> {
+    addAndUpdateReview(rateNumber: number, review: string, product: string, user: string): Promise<IRating>
+    editAndUpdateReview(reviewid: string, rateNumber: number, text: string ): Promise<IRating>
+  
+}
+  
+  
 const RatingSchema = new Schema<IRating>({
     rateNumber: {
         type: Number,
@@ -25,18 +32,43 @@ const RatingSchema = new Schema<IRating>({
     }
 
 }, { timestamps: true})
-RatingSchema.methods.addAndUpdateReview = async function (data:IRating) {
-     const rating = await RateModel.create({
-        rateNumber: data.rateNumber,
-        review: data.review,
-        product: data.product,
-        user: data.user
+// act on model directly
+RatingSchema.statics.addAndUpdateReview = async function (rateNumber: number, review: string, product: string, user: string): Promise<IRating> {
+     const rating = await this.create({
+        rateNumber: rateNumber,
+        review: review,
+        product: product,
+        user: user
      })
      await rating.save()
-     const ratings = await RateModel.find({ product: data.product })
-     const averageRatingtotal = "add all rating number & divide by total number of ratings"
-     const update = await productModel.findByIdAndUpdate(data._id, { averageRating: averageRatingtotal })
-
+     const ratings = await this.find({ product: product })
+     const totalreview = ratings.length + 1
+     const averageRatingtotal = ratings.reduce((sum: any, rating: IRating) => sum + rating.rateNumber, 0) / ratings.length;
+     await mongoose.model('products').findByIdAndUpdate(product, {
+        $set: {
+            averageRating: averageRatingtotal
+        },
+        $inc: {
+            numberOfReviews: 1
+        }
+     })
+     return rating
 }
-const RateModel: Model<IRating> = model<IRating>('ratings', RatingSchema)
+RatingSchema.statics.editAndUpdateReview = async function (reviewid: string, rateNumber: number, text: string): Promise<IRating> {
+    const rating = await this.findByIdAndUpdate(reviewid, {
+        $set: {
+            rateNumber: rateNumber,
+            review: text
+        }
+    })
+    const ratings = await this.find({ product: rating.product })
+    const averageRatingtotal = ratings.reduce((sum: any, rating: IRating) => sum + rating.rateNumber, 0) / ratings.length;
+    await mongoose.model('products').findByIdAndUpdate(rating.product, {
+       $set: {
+           averageRating: averageRatingtotal
+       }
+    })
+    return rating
+}
+const RateModel = model<IRating, IRatingModel>('ratings', RatingSchema)
 export default RateModel

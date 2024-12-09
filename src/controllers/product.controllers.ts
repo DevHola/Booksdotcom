@@ -1,6 +1,6 @@
 import { Request,Response, NextFunction } from "express";
 import { validationResult } from "express-validator";
-import { getProductById, getProductByIsbn, getProductByTitle, getProductsByAuthor, getProductsByCategory, getProductsByPublisher, newProduct } from "../services/product.services";
+import { getAllProduct, getProductById, getProductByIsbn, getProductByTitle, getProductsByAuthor, getProductsByCategory, getProductsByPublisher, newProduct } from "../services/product.services";
 import { DecodedToken } from "../middlewares/passport";
 export const createProduct = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const errors = validationResult(req)
@@ -69,6 +69,18 @@ export const productByTitle = async (req: Request, res: Response, next: NextFunc
         return res.status(200).json({
             status: 'success',
             product
+        })
+    } catch (error) {
+        next(error)
+    }
+    
+}
+export const getproductAll = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    try {
+        const products = await getAllProduct()
+        return res.status(200).json({
+            status: 'success',
+            products
         })
     } catch (error) {
         next(error)

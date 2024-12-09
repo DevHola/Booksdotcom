@@ -14,13 +14,16 @@ export const newProduct = async (data:any): Promise<IProduct> => {
         categoryid: data.categoryid,
         user: data.user
         })
-        console.log(data.categoryid)
         return await product.save()
     
 }
 export const getProductById = async (id:string): Promise<IProduct> => {
     return await productModel.findById(id) as IProduct  
 }
+export const getAllProduct = async (): Promise<IProduct[]> => {
+    return await productModel.find() as IProduct[]  
+}
+
 export const getProductByTitle = async (title:string): Promise<IProduct> => {
     return await productModel.findOne({title: title}) as IProduct
 }
