@@ -1,4 +1,28 @@
 import mongoose from "mongoose";
+export interface IProductFilter {
+    title?: string;
+    author?: string[];
+    minPrice?: number;
+    maxPrice?: number;
+    publisher?: string;
+    minPublishedDate?: Date;
+    maxPublishedDate?: Date;
+    minAverageRating?: number;
+    minNumberOfReviews?: number;
+    minTotalSold?: number;
+    isDiscounted?: boolean;
+    minDiscountinPercent?: number;
+    maxDiscountinPercent?: number;
+    language?: string;
+    categoryid?: string;
+  }
+  export interface ISearchResult{
+    products: [],
+    currentPage: number,
+    totalPage: number,
+    totalProducts: number
+  }
+  
 import productModel, { IProduct } from "../models/product.model";
 export const newProduct = async (data:any): Promise<IProduct> => {
     const product = await productModel.create({
@@ -11,6 +35,7 @@ export const newProduct = async (data:any): Promise<IProduct> => {
         published_Date: data.published_Date,
         noOfPages: data.noOfPages,
         coverImage: data.coverImage,
+        language: data.language,
         categoryid: data.categoryid,
         user: data.user
         })
@@ -77,4 +102,55 @@ export const getProductsByPublisher = async (publisher: string): Promise<IProduc
 }
 export const EditProduct = async (id:string): Promise<any> => {
     return productModel.findByIdAndUpdate(id, {}, { upsert: true })
+}
+export const searchProducts = async (filter: IProductFilter, page: number, limit: number): Promise<ISearchResult> => {
+    const query: any = {}
+    if(filter.title){
+        query.title = { $regex: new RegExp(filter.title, 'i') };
+    }
+    if(filter.author){
+        query.author = { $in: filter.author }
+    }
+    if(filter.minPrice !== undefined){
+        query.price = {...query.price, $gte: filter.minPrice  }
+    }
+    if(filter.maxPrice !== undefined){
+        query.price = {...query.price, $lte: filter.minPrice  }
+    }
+    if(filter.publisher){
+        query.publisher = filter.publisher
+    }
+    if(filter.minPublishedDate){
+        query.published_Date = {...query.published_Date, $gte: filter.minPublishedDate  }
+    }
+    if(filter.maxPublishedDate){
+        query.published_Date = {...query.published_Date, $lte: filter.maxPublishedDate  }
+    }
+    if(filter.minAverageRating !== undefined){
+        query.averageRating = { $gte: filter.minAverageRating  }
+    }
+    if(filter.minNumberOfReviews !== undefined){
+        query.numberOfReviews = { $gte: filter.minNumberOfReviews  }
+    }
+    if(filter.minTotalSold !== undefined){
+        query.totalSold = {$gte: filter.minTotalSold  }
+    }
+    if(filter.isDiscounted !== undefined){
+        query.isDiscounted = filter.isDiscounted  
+    }
+    if(filter.minDiscountinPercent !== undefined){
+        query.discountinPercent = {...query.discountinPercent, $gte: filter.minDiscountinPercent  }
+    }
+    if(filter.maxDiscountinPercent !== undefined){
+        query.discountinPercent = {...query.discountinPercent, $lte: filter.maxDiscountinPercent  }
+    }
+    if(filter.language !== undefined){
+        query.language = filter.language  
+    }
+    if(filter.categoryid !== undefined){
+        query.categoryid = filter.categoryid  
+    }
+    const products = await productModel.find(query).sort({ createdAt: -1 }).skip((page - 1) * limit ).limit(limit)
+    const producttotal = await productModel.find(query).countDocuments()
+    return { products, currentPage: page, totalPage: Math.ceil(producttotal/limit), totalProducts: producttotal  } as ISearchResult
 }

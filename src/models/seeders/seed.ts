@@ -35,6 +35,7 @@ const products = [
         noOfPages: 180,
         coverImage: "great_gatsby_cover.jpg",
         categoryid: "6752a364e8267b14680cd564", // Replace with actual category ID
+        language:"english",
         user: "67507542988454964598814a" // Replace with actual user ID
     },
     {
@@ -48,6 +49,7 @@ const products = [
         noOfPages: 281,
         coverImage: "to_kill_a_mockingbird_cover.jpg",
         categoryid: "6752a364e8267b14680cd565", // Replace with actual category ID
+        language:"english",
         user: "67507542988454964598814a" // Replace with actual user ID
     },
     {
@@ -61,6 +63,7 @@ const products = [
         noOfPages: 328,
         coverImage: "1984_cover.jpg",
         categoryid: "6752a364e8267b14680cd566", // Replace with actual category ID
+        language:"english",
         user: "67507542988454964598814a" // Replace with actual user ID
     },
     {
@@ -74,6 +77,7 @@ const products = [
         noOfPages: 279,
         coverImage: "pride_and_prejudice_cover.jpg",
         categoryid: "6752a364e8267b14680cd567", // Replace with actual category ID
+        language:"english",
         user: "67507542988454964598814a" // Replace with actual user ID
     },
     {
@@ -87,6 +91,7 @@ const products = [
         noOfPages: 310,
         coverImage: "the_hobbit_cover.jpg",
         categoryid: "6752a364e8267b14680cd568", // Replace with actual category ID
+        language:"english",
         user: "67507542988454964598814a" // Replace with actual user ID
     }
 ]

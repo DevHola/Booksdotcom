@@ -42,7 +42,7 @@ const startApp = async (PORT: any) => {
   }
   void connection(uri)
   // await seedcategory()
-  // await seedproducts()
+ //  await seedproducts()
   app.listen(PORT, () => {
     console.log(`Express is listening at http://localhost:${PORT}`)
   })

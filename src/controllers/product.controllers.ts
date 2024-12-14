@@ -1,7 +1,8 @@
 import { Request,Response, NextFunction } from "express";
 import { validationResult } from "express-validator";
-import { getAllProduct, getProductById, getProductByIsbn, getProductByTitle, getProductsByAuthor, getProductsByCategory, getProductsByPublisher, newProduct } from "../services/product.services";
+import { getAllProduct, getProductById, getProductByIsbn, getProductByTitle, getProductsByAuthor, getProductsByCategory, getProductsByPublisher, IProductFilter, ISearchResult, newProduct, searchProducts } from "../services/product.services";
 import { DecodedToken } from "../middlewares/passport";
+import { addFormatToProduct, removeFormatFromProduct, updateFormatInProduct } from "../services/format.services";
 export const createProduct = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const errors = validationResult(req)
     if(!errors.isEmpty()){
@@ -10,7 +11,7 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
         })
     }
     try {
-        const { title, description, Isbn, author, price, publisher, published_Date,noOfPages, coverImage, categoryid } = req.body
+        const { title, description, Isbn,language, author, price, publisher, published_Date,noOfPages, coverImage, categoryid } = req.body
         const user = req.user as DecodedToken
         const id = user.id
         const data = {
@@ -23,6 +24,7 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
             published_Date: published_Date as Date,
             noOfPages: noOfPages as number,
             coverImage: coverImage as string,
+            language: language as string,
             categoryid: categoryid as any,
             user: id
         } 
@@ -177,4 +179,101 @@ export const productEdit = async (req: Request, res: Response, next: NextFunctio
         next(error)
     }
     
+}
+export const search = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    try {
+        const query = req.query.q || ''
+        const page = parseInt(req.query.page as string) || 1
+        const limit = parseInt(req.query.page as string) || 10
+        const filters = {
+            title: req.query.title,
+            author: req.query.author,
+            minPrice: req.query.minPrice,
+            maxPrice: req.query.maxPrice,
+            publisher: req.query.publisher,
+            minPublishedDate: req.query.minPublishedDate,
+            maxPublishedDate: req.query.maxPublishedDate,
+            minAverageRating: req.query.minAverageRating,
+            minNumberOfReviews: req.query.minNumberOfReviews,
+            minTotalSold: req.query.minTotalSold,
+            isDiscounted: req.query.isDiscounted,
+            minDiscountinPercent: req.query.minDiscountinPercent,
+            maxDiscountinPercent: req.query.maxDiscountinPercent,
+            language: req.query.language,
+            category: req.query.category,
+
+        }
+        const products: ISearchResult = await searchProducts(filters as IProductFilter, page, limit)
+        return res.status(200).json({
+            products
+        })        
+    } catch (error) {
+        next(error)
+    }
+}
+export const addFormat = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+   try {
+    const { type, fileSizeMB, downloadLink, product } = req.body
+    const data: any = {
+        type,
+        fileSizeMB,
+        downloadLink,
+        product
+    }
+    const format = await addFormatToProduct(data, product)
+    return res.status(200).json({
+        message: 'success'
+    })
+} catch (error) {
+    if(error instanceof Error){
+        if(error.message === 'product not found'){
+            return res.status(404).json({
+                message: 'product not found'
+            })
+        } else{
+            next(error)
+        }
+    }
+   } 
+}
+export const removeFormat = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    try {
+        const { productid, formatid } = req.body
+        const format = await removeFormatFromProduct(productid, formatid)
+        return res.status(200).json({
+            message: 'removed'
+        })
+    } catch (error) {
+        if(error instanceof Error){
+            if(error.message === 'product not found'){
+                return res.status(404).json({
+                    message: 'product not found'
+                })
+            } else{
+                next(error)
+            }
+        }
+    }
+}
+export const UpdateFormat = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    try {
+        const { weight, productid, formatid } = req.body
+        const data: any = {
+            weight
+        }
+        const format = await updateFormatInProduct(data, productid, formatid)
+        return res.status(200).json({
+            message: 'updated'
+        })
+    } catch (error) {
+        if(error instanceof Error){
+            if(error.message === 'product not found'){
+                return res.status(404).json({
+                    message: 'product not found'
+                })
+            } else{
+                next(error)
+            }
+        }
+    }
 }
