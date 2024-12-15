@@ -8,29 +8,25 @@ export const addFormatToProduct = async (data:any, id: string) => {
     product.formats.push(data)
     return await product.save()
 }
-export const removeFormatFromProduct = async (productid: string, formatid: string) => {
+export const removeFormatFromProduct = async (productid: string, formatid: any) => {
     const product = await productModel.findById(productid)
     if(!product){
         throw new Error('product not found')
     }
-    const format = product.formats.filter((formatdata)=> {
-        formatdata._id != formatid
+    const format = await productModel.updateOne({_id: productid, 'formats._id': formatid}, {
+        $pull: {
+            formats: { _id: formatid }
+        }
     })
-    product.formats = format
-    await product.save()
 }
 export const updateFormatInProduct = async (data:any, productid: string, formatid: string) => {
-    // pending
     const product = await productModel.findById(productid)
     if(!product){
         throw new Error('product not found')
-    }   
-    const format = product.formats.filter((formatdata) => {
-         formatdata._id == formatid
-    })
-    console.log(format)
-    // if(format){
-    //     format.fileSizeMB = data.weight
-    // }
-    await product.save()
+    }
+    const format = await productModel.updateOne({'formats._id': formatid}, {
+        $set: {
+            "formats.$.stock": data.stock
+        }
+    }, { upsert: true })
 }

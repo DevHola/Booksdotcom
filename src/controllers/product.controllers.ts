@@ -257,9 +257,9 @@ export const removeFormat = async (req: Request, res: Response, next: NextFuncti
 }
 export const UpdateFormat = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
-        const { weight, productid, formatid } = req.body
+        const { stock, productid, formatid } = req.body
         const data: any = {
-            weight
+            stock
         }
         const format = await updateFormatInProduct(data, productid, formatid)
         return res.status(200).json({
