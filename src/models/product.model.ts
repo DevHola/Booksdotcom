@@ -1,22 +1,25 @@
+// incorporate formats into controlleers
 import mongoose, {Document, Schema, Model, model} from "mongoose";
 import { ICategory } from "./category.model";
+import { formatSchema, IFormat } from "./format.model";
 export interface IProduct extends Document {
     title: String
     description: String
     ISBN: String
     author: String[]
-    price: Number
     publisher: string
     published_Date: Date
     noOfPages: number
-    coverImage: String
+    coverImage: String[]
     averageRating?: Number
     numberOfReviews?: Number
     totalSold?: Number
     isDiscounted?: Boolean
     discountinPercent?: Number
+    language: String
     categoryid: ICategory
     user: String    
+    formats: IFormat[]
 }
 const ProductSchema = new Schema<IProduct>({
     title: {
@@ -40,11 +43,6 @@ const ProductSchema = new Schema<IProduct>({
         required: true,
         lowercase: true
     }],
-    price: {
-        type: Number,
-        required: true,
-        default: 0
-    },
     publisher: {
         type: String,
         required: true
@@ -57,9 +55,9 @@ const ProductSchema = new Schema<IProduct>({
         type: Number,
         required: true
     },
-    coverImage: {
+    coverImage: [{
         type: String
-    },
+    }],
     averageRating: {
         type: Number,
         default: 0
@@ -82,6 +80,10 @@ const ProductSchema = new Schema<IProduct>({
         required: true,
         default: 0
     },
+    language: {
+        type: String,
+        required: true
+    },
     categoryid: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Categories'
@@ -89,6 +91,9 @@ const ProductSchema = new Schema<IProduct>({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users'
+    },
+    formats: {
+        type: [formatSchema]
     }
 
 }, { timestamps: true })

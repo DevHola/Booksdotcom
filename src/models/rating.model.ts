@@ -9,10 +9,7 @@ export interface IRating extends Document {
 interface IRatingModel extends Model<IRating> {
     addAndUpdateReview(rateNumber: number, review: string, product: string, user: string): Promise<IRating>
     editAndUpdateReview(reviewid: string, rateNumber: number, text: string ): Promise<IRating>
-  
 }
-  
-  
 const RatingSchema = new Schema<IRating>({
     rateNumber: {
         type: Number,
