@@ -1,20 +1,42 @@
 import mongoose, { Schema, Document, Model, model } from 'mongoose'
 interface IOrder extends Document {
     user: String,
-    product: String
+    products: String[]
     status: Boolean
     PaymentHandler: String
     Ref: String
 }
+interface IOrderProduct extends Document {
+    product: String
+    format: String
+    price: Number
+    quantity: Number
+}
+const OrderProduct = new Schema<IOrderProduct>({
+    product: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product',
+        required: true
+      },
+      format: {
+        type: String,
+        required: true
+      },
+      price: {
+        type: Number,
+        required: true
+      },
+      quantity: {
+        type: Number,
+        required: true
+      }
+})
 const OrderSchema = new Schema<IOrder>({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users'
     },
-    product: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'products'
-    },
+    products: [OrderProduct],
     status: {
         type: Boolean,
         required: true,

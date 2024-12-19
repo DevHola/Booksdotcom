@@ -1,4 +1,4 @@
-import {Document, Model, Schema, model} from "mongoose";
+import mongoose, {Document, Model, Schema, model} from "mongoose";
 import bcrypt from 'bcrypt'
 export interface IUser extends Document{
     username: string
@@ -9,6 +9,8 @@ export interface IUser extends Document{
     provider: string
     provider_id?: string
     otp?: string
+    wishlist: string[]
+    preferences: string[]
 }
 const Userschema = new Schema<IUser>({
     username: {
@@ -46,7 +48,15 @@ const Userschema = new Schema<IUser>({
     otp: {
         type: String,
         default: null
-    }
+    },
+    wishlist: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'products'
+    }],
+    preferences: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'products'
+    }]
 
 }, {timestamps: true})
 Userschema.pre('save', async function (this: IUser, next) {

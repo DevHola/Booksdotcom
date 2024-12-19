@@ -1,8 +1,8 @@
 import { Request,Response, NextFunction } from "express";
 import { validationResult } from "express-validator";
-import { getAllProduct, getProductById, getProductByIsbn, getProductByTitle, getProductsByAuthor, getProductsByCategory, getProductsByPublisher, IProductFilter, ISearchResult, newProduct, searchProducts } from "../services/product.services";
+import { bestBooksFromGenre, bestSellers, getAllProduct, getProductById, getProductByIsbn, getProductByTitle, getProductsByAuthor, getProductsByCategory, getProductsByPublisher, IProductFilter, ISearchResult, newArrivals, newProduct, searchProducts } from "../services/product.services";
 import { DecodedToken } from "../middlewares/passport";
-import { addFormatToProduct, removeFormatFromProduct, updateFormatInProduct } from "../services/format.services";
+import { addFormatToProduct, removeFormatFromProduct, updateFormatPrice, updateStockInProduct } from "../services/format.services";
 export const createProduct = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const errors = validationResult(req)
     if(!errors.isEmpty()){
@@ -19,11 +19,10 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
             description: description as string,
             ISBN: Isbn as string,
             author: author as string[],
-            price: price as number,
             publisher: publisher as string,
             published_Date: published_Date as Date,
             noOfPages: noOfPages as number,
-            coverImage: coverImage as string,
+            coverImage: coverImage as string[],
             language: language as string,
             categoryid: categoryid as any,
             user: id
@@ -66,8 +65,9 @@ export const productByTitle = async (req: Request, res: Response, next: NextFunc
         })
     }
     try {
-        const { title } = req.params
-        const product = await getProductByTitle(title)
+        const title  = req.query.title || String
+        
+        const product = await getProductByTitle(title as string)
         return res.status(200).json({
             status: 'success',
             product
@@ -188,8 +188,6 @@ export const search = async (req: Request, res: Response, next: NextFunction): P
         const filters = {
             title: req.query.title,
             author: req.query.author,
-            minPrice: req.query.minPrice,
-            maxPrice: req.query.maxPrice,
             publisher: req.query.publisher,
             minPublishedDate: req.query.minPublishedDate,
             maxPublishedDate: req.query.maxPublishedDate,
@@ -213,13 +211,22 @@ export const search = async (req: Request, res: Response, next: NextFunction): P
 }
 export const addFormat = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
    try {
-    const { type, fileSizeMB, downloadLink, product } = req.body
-    const data: any = {
-        type,
-        fileSizeMB,
-        downloadLink,
-        product
+    const { type, downloadLink, product, stock, price } = req.body
+    const data: any = {}
+    if(type === 'physical'){
+        data.type = type
+        data.price = price
+        data.stock = stock
+        data.product = product
     }
+    if(type !== 'physical'){
+        data.type = type
+        data.price = price
+        data.downloadLink = downloadLink
+        data.product = product
+    }
+    
+    
     const format = await addFormatToProduct(data, product)
     return res.status(200).json({
         message: 'success'
@@ -255,13 +262,13 @@ export const removeFormat = async (req: Request, res: Response, next: NextFuncti
         }
     }
 }
-export const UpdateFormat = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const IncreaseStockForPhysicalFormat = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const { stock, productid, formatid } = req.body
         const data: any = {
             stock
         }
-        const format = await updateFormatInProduct(data, productid, formatid)
+        const format = await updateStockInProduct(data, productid, formatid)
         return res.status(200).json({
             message: 'updated'
         })
@@ -275,5 +282,80 @@ export const UpdateFormat = async (req: Request, res: Response, next: NextFuncti
                 next(error)
             }
         }
+    }
+}
+export const updatePriceFormat = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    try {
+        const { price, productid, formatid } = req.body
+        const data: any = {
+            price
+        }
+        const format = await updateFormatPrice(data, productid, formatid)
+        return res.status(200).json({
+            message: 'updated'
+        })
+    } catch (error) {
+        if(error instanceof Error){
+            if(error.message === 'product not found'){
+                return res.status(404).json({
+                    message: 'product not found'
+                })
+            } else{
+                next(error)
+            }
+        }
+    }
+}
+export const newArrivalsProduct = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    try {
+        const query = req.query.q || ''
+        const page = parseInt(req.query.page as string) || 1
+        const limit = parseInt(req.query.limit as string) || 10
+        const products = await newArrivals(page, limit)
+        if(products) {
+            return res.status(200).json({
+                products
+            })
+        }
+    } catch (error) {
+        next(error)
+    }
+}
+export const bestBooksByGenre = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    try {
+        const page = parseInt(req.query.page as string) || 1
+        const limit = parseInt(req.query.limit as string) || 10
+        const category = req.query.category as string
+        const products = await bestBooksFromGenre(category, page, limit)
+        if(products){
+            return res.status(200).json({
+                products
+            })
+        }
+        
+    } catch (error) {
+        if(error instanceof Error){
+            if(error.message === 'Category not found'){
+                return res.status(200).json({
+                    message: 'category does not exist'
+                })
+            } else{
+                next(error)
+            }
+        }
+    }
+}
+export const bestSellersProducts = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    try {
+        const page = parseInt(req.query.page as string) || 1
+        const limit = parseInt(req.query.limit as string) || 10
+        const products = await bestSellers(page, limit)
+        if(products){
+            return res.status(200).json({
+                products
+            })
+        }
+    } catch (error) {
+        next(error)
     }
 }

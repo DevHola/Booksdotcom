@@ -7,11 +7,10 @@ export interface IProduct extends Document {
     description: String
     ISBN: String
     author: String[]
-    price: Number
     publisher: string
     published_Date: Date
     noOfPages: number
-    coverImage: String
+    coverImage: String[]
     averageRating?: Number
     numberOfReviews?: Number
     totalSold?: Number
@@ -44,11 +43,6 @@ const ProductSchema = new Schema<IProduct>({
         required: true,
         lowercase: true
     }],
-    price: {
-        type: Number,
-        required: true,
-        default: 0
-    },
     publisher: {
         type: String,
         required: true
@@ -61,9 +55,9 @@ const ProductSchema = new Schema<IProduct>({
         type: Number,
         required: true
     },
-    coverImage: {
+    coverImage: [{
         type: String
-    },
+    }],
     averageRating: {
         type: Number,
         default: 0

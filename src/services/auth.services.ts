@@ -2,6 +2,13 @@ import UserModel, { IUser } from "../models/User.model"
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { mail } from "../configs/delivermail"
+import ProfileModel from "../models/profile.model"
+export interface ISearchResult{
+    authors: any ,
+    currentPage: number,
+    totalPage: number,
+    totalauthors: number
+  }
 export const registerUser = async (data: IUser, type: string): Promise<string> => {
     if(type === 'local'){
         const user = await UserModel.create({
@@ -123,6 +130,87 @@ export const activate = async (id: string) => {
 export const assignUserRole = async (id:string, role: string) => {
     const user = await UserModel.findByIdAndUpdate(id, { role:role } )
     return user as IUser
+}
+export const addToWishlist = async (userid: string, productid: string) => {
+    const user = await UserModel.findById(userid)
+    if(!user){
+        throw new Error('user not found')
+    }
+    if (user.wishlist.includes(productid)) {
+        throw new Error('Product already in wishlist');
+    }
+    user.wishlist.push(productid)
+    return await user.save()
+}
+export const removeFromWishlist = async (userid: string, productid: string): Promise<IUser> => {
+    return await UserModel.findByIdAndUpdate(userid, {
+        $pull: {
+            wishlist: productid
+        }
+    }) as IUser  
+}
+export const getUserWishlist = async (userid: string): Promise<IUser> => {
+    return await UserModel.findOne({_id: userid}, {
+        wishlist: 1
+    }) as IUser
+}
+export const addToPreference = async (userid: string, productid: string[]) => {
+    const user = await UserModel.findById(userid)
+    if(!user){
+        throw new Error('user not found')
+    }
+    const updated = await UserModel.findByIdAndUpdate(user._id, {
+        $addToSet: {
+            preferences: {
+                $each: productid
+            }
+        }
+    }, { new: true })
+    if(!updated){
+        throw new Error('Error updating user preferences')
+    }
+    return updated as IUser
+}
+export const removeFromPreference = async (userid: string, productid: string): Promise<IUser> => {
+    return await UserModel.findByIdAndUpdate(userid, {
+        $pull: {
+            preferences: productid
+        }
+    }) as IUser  
+}
+const getFeaturedAuthors = async (page: number, limit: number): Promise<ISearchResult> => {
+    const [authors, totalauthors] = await Promise.all([
+        await UserModel.aggregate([
+            {
+                $lookup: {
+                    from: 'profiles',
+                    localField:'profileid',
+                    foreignField:'_id',
+                    as: 'profile'
+                }
+            },
+            {
+                $unwind: '$profile'
+            },
+            {
+                $match: {
+                    'type': 'creator',
+                    'profile.isFeatured': true
+                }
+            },
+            {
+                $project: {
+                    username: 1,
+                    email: 1,
+                    img:'$profile.imgsrc',
+    
+                }
+            }
+        ]).skip((page - 1 ) * limit).limit(limit).exec(),
+        await ProfileModel.find({isFeatured: true}).countDocuments()
+    ])
+     
+    return { authors, currentPage: page, totalPage: Math.ceil(totalauthors/limit), totalauthors }
 }
 export const extractor = async (req:any): Promise<string> => {
     const headers = req.headers['authorization']

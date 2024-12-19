@@ -1,31 +1,25 @@
 import mongoose, {Document, Schema, Model, model} from "mongoose";
 export interface IFormat extends Document {
     type: String
-    fileSizeMB?: String
+    price: Number
     downloadLink?: String
-    weight?: String
     stock?: Number
     product?: String 
 }
 export const formatSchema = new Schema<IFormat>({
     type: {
         type: String,
-        enum:['ebook', 'physical'],
+        enum:['ebook', 'physical','audiobook'],
         required: true,
         lowercase: true
     },
-    fileSizeMB: {
-        type: String,
-        required: function() { return this.type === 'ebook'; }
+    price: {
+        type: Number,
+        required: true
     },
     downloadLink: {
         type: String,
         required: function() { return this.type === 'ebook'; }
-    },
-    weight: {
-        type: String,
-        required: function() { return this.type === 'physical'; },
-        lowercase: true
     },
     stock: {
         type: Number,

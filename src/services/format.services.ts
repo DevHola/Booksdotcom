@@ -19,14 +19,32 @@ export const removeFormatFromProduct = async (productid: string, formatid: any) 
         }
     })
 }
-export const updateFormatInProduct = async (data:any, productid: string, formatid: string) => {
+export const updateStockInProduct = async (data:any, productid: string, formatid: string) => {
+    const product = await productModel.findById(productid)
+    if(!product){
+        throw new Error('product not found')
+    }
+    const format = await productModel.updateOne({'formats._id': formatid, 'formats.type': 'physical'}, {
+        $inc: {
+            "formats.$.stock": data.stock
+        }
+    }, { upsert: true })
+    if(!format){
+        throw new Error('Error updating price')
+    }
+}
+export const updateFormatPrice = async (data:any, productid: string, formatid: string): Promise<any> => {
     const product = await productModel.findById(productid)
     if(!product){
         throw new Error('product not found')
     }
     const format = await productModel.updateOne({'formats._id': formatid}, {
         $set: {
-            "formats.$.stock": data.stock
+            "formats.$.price": data.price
         }
     }, { upsert: true })
+    if(!format){
+        throw new Error('Error updating price')
+    }
+    return format
 }
