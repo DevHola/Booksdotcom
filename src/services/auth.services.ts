@@ -152,9 +152,9 @@ export const removeFromWishlist = async (userid: string, productid: string): Pro
 export const getUserWishlist = async (userid: string): Promise<IUser> => {
     return await UserModel.findOne({_id: userid}, {
         wishlist: 1
-    }) as IUser
+    }).populate("wishlist").exec() as IUser
 }
-export const addToPreference = async (userid: string, productid: string[]) => {
+export const addToPreference = async (userid: string, categoryid: string[]) => {
     const user = await UserModel.findById(userid)
     if(!user){
         throw new Error('user not found')
@@ -162,7 +162,7 @@ export const addToPreference = async (userid: string, productid: string[]) => {
     const updated = await UserModel.findByIdAndUpdate(user._id, {
         $addToSet: {
             preferences: {
-                $each: productid
+                $each: categoryid
             }
         }
     }, { new: true })
@@ -171,14 +171,14 @@ export const addToPreference = async (userid: string, productid: string[]) => {
     }
     return updated as IUser
 }
-export const removeFromPreference = async (userid: string, productid: string): Promise<IUser> => {
+export const removeFromPreference = async (userid: string, category: string): Promise<IUser> => {
     return await UserModel.findByIdAndUpdate(userid, {
         $pull: {
-            preferences: productid
+            preferences: category
         }
     }) as IUser  
 }
-const getFeaturedAuthors = async (page: number, limit: number): Promise<ISearchResult> => {
+export const getFeaturedAuthors = async (page: number, limit: number): Promise<ISearchResult> => {
     const [authors, totalauthors] = await Promise.all([
         await UserModel.aggregate([
             {
