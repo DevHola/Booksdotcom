@@ -14,10 +14,12 @@ import productRouter from './routes/product.route'
 import reviewRouter from './routes/review.route'
 import { seedcategory, seedproducts } from './models/seeders/seed'
 const app: Application = express()
-app.use(cors())
+app.use(cors({
+  origin: "*"
+}))
 app.use(morgan('dev'))
 app.use(express.json())
-app.use(express.urlencoded({ extended: false }))
+app.use(express.urlencoded({ extended: true }))
 app.use(helmet())
 app.disable('x-powered-by')
 app.use(passport.initialize())
@@ -30,6 +32,8 @@ app.use((error: Error, req: Request, res: Response, next: NextFunction): any => 
     ...(isProduction ? null : { stack: error.stack })
   })
 })
+app.use('/uploads',express.static(path.join(__dirname, '../', 'uploads')));
+// console.log(path.join(__dirname, '../', 'uploads'));
 app.use('/api/v1/auth', AuthRouter)
 app.use('/api/v1/category', categoryRouter)
 app.use('/api/v1/products', productRouter)

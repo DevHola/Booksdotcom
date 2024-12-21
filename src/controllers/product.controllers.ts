@@ -3,6 +3,8 @@ import { validationResult } from "express-validator";
 import { bestBooksFromGenre, bestSellers, getAllProduct, getProductById, getProductByIsbn, getProductByTitle, getProductsByAuthor, getProductsByCategory, getProductsByPublisher, IProductFilter, ISearchResult, newArrivals, newProduct, searchProducts } from "../services/product.services";
 import { DecodedToken } from "../middlewares/passport";
 import { addFormatToProduct, removeFormatFromProduct, updateFormatPrice, updateStockInProduct } from "../services/format.services";
+import { cloudinaryImageUploadMethod } from "../middlewares/cloudinary";
+
 export const createProduct = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const errors = validationResult(req)
     if(!errors.isEmpty()){
@@ -11,9 +13,16 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
         })
     }
     try {
-        const { title, description, Isbn,language, author, price, publisher, published_Date,noOfPages, coverImage, categoryid } = req.body
+
+        const urls = await cloudinaryImageUploadMethod(req.files, process.env.PRODUCTIMGFOLDER as string)
+        const { title, description, Isbn,language, author, publisher, published_Date, noOfPages, categoryid } = req.body
         const user = req.user as DecodedToken
         const id = user.id
+        if (!req.files) {
+            return res.status(400).json({
+              message: 'No files uploaded!',
+            });
+          }
         const data = {
             title: title as string,
             description: description as string,
@@ -22,19 +31,22 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
             publisher: publisher as string,
             published_Date: published_Date as Date,
             noOfPages: noOfPages as number,
-            coverImage: coverImage as string[],
+            coverImage: urls as string[],
             language: language as string,
             categoryid: categoryid as any,
             user: id
-        } 
+        }
         const product = await newProduct(data)
-        res.status(200).json({
-            status: 'success',
-            product
-        })
-        
+        if(product){
+            return res.status(201).json({
+                status: 'success',
+                product
+            })
+        }       
     } catch (error) {
-        next(error)
+        if(error instanceof Error){
+            next(error)
+        }
     }
     
 }
@@ -79,7 +91,9 @@ export const productByTitle = async (req: Request, res: Response, next: NextFunc
 }
 export const getproductAll = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
-        const products = await getAllProduct()
+        const page = parseInt(req.query.page as string) || 1
+        const limit = parseInt(req.query.limit as string) || 10
+        const products = await getAllProduct(page, limit)
         return res.status(200).json({
             status: 'success',
             products
@@ -116,8 +130,10 @@ export const ProductByCategory = async (req: Request, res: Response, next: NextF
         })
     }
     try {
+        const page = parseInt(req.query.page as string) || 1
+        const limit = parseInt(req.query.limit as string) || 10
         const { category } = req.params
-        const product = await getProductsByCategory(category)
+        const product = await getProductsByCategory(category, page, limit)
         return res.status(200).json({
             status: 'success', 
             product
@@ -136,8 +152,10 @@ export const productByAuthor = async (req: Request, res: Response, next: NextFun
         })
     }
     try {
+        const page = parseInt(req.query.page as string) || 1
+        const limit = parseInt(req.query.limit as string) || 10
         const { author } = req.params
-        const product = await getProductsByAuthor(author)
+        const product = await getProductsByAuthor(author, page, limit)
         return res.status(200).json({
             status: 'success',
             product
@@ -155,8 +173,10 @@ export const productByPublisher = async (req: Request, res: Response, next: Next
         })
     }
     try {
+        const page = parseInt(req.query.page as string) || 1
+        const limit = parseInt(req.query.limit as string) || 10
         const { publisher } = req.params
-        const product = await getProductsByPublisher(publisher)
+        const product = await getProductsByPublisher(publisher, page, limit)
         return res.status(200).json({
             status: 'success',
             product

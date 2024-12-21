@@ -45,8 +45,8 @@ export const newProduct = async (data:any): Promise<IProduct> => {
 export const getProductById = async (id:string): Promise<IProduct> => {
     return await productModel.findById(id) as IProduct  
 }
-export const getAllProduct = async (): Promise<IProduct[]> => {
-    return await productModel.find() as IProduct[]  
+export const getAllProduct = async (page: number, limit: number): Promise<IProduct[]> => {
+    return await productModel.find().skip((page - 1 ) * limit).limit(limit) as IProduct[]  
 }
 
 export const getProductByTitle = async (title:string): Promise<IProduct> => {
@@ -55,7 +55,7 @@ export const getProductByTitle = async (title:string): Promise<IProduct> => {
 export const getProductByIsbn = async (Isbn: string): Promise<IProduct> => {
     return await productModel.findOne({ISBN: Isbn}) as IProduct
 }
-export const getProductsByCategory = async (category: string) => {
+export const getProductsByCategory = async (category: string, page: number, limit: number) => {
     return await productModel.aggregate([
         {
             $lookup: {
@@ -92,13 +92,13 @@ export const getProductsByCategory = async (category: string) => {
             }
         }
 
-    ])
+    ]).skip((page - 1 ) * limit).limit(limit).exec()
 }
-export const getProductsByAuthor = async (author: string): Promise<IProduct[]> => {
-    return productModel.find({author: { $in: author }}).populate('categoryid', 'user').exec()
+export const getProductsByAuthor = async (author: string, page: number, limit: number): Promise<IProduct[]> => {
+    return productModel.find({author: { $in: author }}).skip((page - 1 ) * limit).limit(limit).populate('categoryid', 'user').exec()
 }
-export const getProductsByPublisher = async (publisher: string): Promise<IProduct[]> => {
-    return await productModel.find({publisher: publisher}).populate('categoryid').exec()
+export const getProductsByPublisher = async (publisher: string, page: number, limit: number): Promise<IProduct[]> => {
+    return await productModel.find({publisher: publisher}).skip((page - 1) * limit).limit(limit).populate('categoryid').exec()
 }
 export const EditProduct = async (id:string): Promise<any> => {
     return productModel.findByIdAndUpdate(id, {}, { upsert: true })
@@ -154,7 +154,6 @@ export const newArrivals = async (page: number, limit: number): Promise<ISearchR
         await productModel.find().sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
         await productModel.countDocuments()
     ])  
-    console.log(products)
     return { products, currentPage: page, totalPage: Math.ceil(totalProducts/limit), totalProducts: totalProducts  } as ISearchResult
 }
 export const bestBooksFromGenre = async (category: string, page: number, limit: number) => {

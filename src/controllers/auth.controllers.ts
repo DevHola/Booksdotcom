@@ -1,6 +1,6 @@
-import { type Request, type Response, type NextFunction } from 'express'
+import e, { type Request, type Response, type NextFunction } from 'express'
 import { type IUser } from '../models/User.model'
-import { activate, assignUserRole, changePassword, checkOTP, extractor, generateToken, getUserById, otpgen, registerUser, Regverificationmail, Resetpasswordmail, UserByEmail, UserExist, ValidateUserPassword, verificationmail, verifyResetToken, verifyVerificationToken } from '../services/auth.services'
+import { activate, addToPreference, addToWishlist, assignUserRole, changePassword, checkOTP, extractor, generateToken, getFeaturedAuthors, getUserById, getUserWishlist, otpgen, registerUser, Regverificationmail, removeFromPreference, removeFromWishlist, Resetpasswordmail, UserByEmail, UserExist, ValidateUserPassword, verificationmail, verifyResetToken, verifyVerificationToken } from '../services/auth.services'
 import { validationResult } from 'express-validator'
 import { DecodedToken } from '../middlewares/passport'
 import { reusableMail } from '../configs/delivermail'
@@ -274,5 +274,116 @@ export const assignRole = async (req: Request, res: Response, next: NextFunction
         next(error)
       }
     }
+  }
+}
+export const addToWish = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const productid = req.query.product
+    const user = req.user as DecodedToken
+    const userid = user.id
+    const add = await addToWishlist(userid, productid as string)
+    if(add){
+      return res.status(200).json({
+        status: true
+      })
+    }
+    
+  } catch (error) {
+    if(error instanceof Error){
+      if(error.message === 'user not found'){
+        return res.status(404).json({
+          message: 'user not found'
+        })
+      } else if (error.message === 'Product already in wishlist'){
+        return res.status(400).json({
+          message: 'product already in wishlist'
+        })
+      }
+      else {
+        next(error)
+      }
+    }
+  }
+}
+export const removewishlist = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const productid = req.query.product
+    const user = req.user as DecodedToken
+    const userid = user.id
+    const remove = await removeFromWishlist(userid, productid as string)
+    if(remove) {
+      return res.status(200).json({
+        status: true,
+        productid
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+}
+export const userwishlist = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const user = req.user as DecodedToken
+    const userid = user.id
+    const list = await getUserWishlist(userid)
+    if(list){
+      return res.status(200).json({
+        list
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+}
+export const addPreference = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const category: string[] = req.body.preferences 
+    const user = req.user as DecodedToken
+    const userid = user.id
+    const add = await addToPreference(userid, category as string[])
+    if(add){
+      return res.status(200).json({
+        status: true
+      })
+    }
+  } catch (error) {
+    if(error instanceof Error){
+      if(error.message === 'user not found'){
+        return res.status(404).json({
+          message: 'user not found'
+        })
+      } else {
+        next(error)
+      }
+    }
+  }
+}
+export const removePreference = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const categoryid = req.query.category
+    const user = req.user as DecodedToken
+    const userid = user.id
+    const list = await removeFromPreference(userid, categoryid as string)
+    if(list){
+      return res.status(200).json({
+        list
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+}
+export const featuredAuthors = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 10
+    const authors = await getFeaturedAuthors(page, limit)
+    if(authors){
+      return res.status(200).json({
+        authors
+      })
+    }
+  } catch (error) {
+    next(error)
   }
 }
