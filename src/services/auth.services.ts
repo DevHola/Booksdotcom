@@ -130,6 +130,7 @@ export const activate = async (id: string) => {
 export const assignUserRole = async (id:string, role: string) => {
     const user = await UserModel.findByIdAndUpdate(id, { role:role } )
     return user as IUser
+    // add if user role is creator create a profile for the user which they would need to update to be able to use the platform
 }
 export const addToWishlist = async (userid: string, productid: string) => {
     const user = await UserModel.findById(userid)
@@ -171,12 +172,21 @@ export const addToPreference = async (userid: string, categoryid: string[]) => {
     }
     return updated as IUser
 }
-export const removeFromPreference = async (userid: string, category: string): Promise<IUser> => {
+export const removeFromPreference = async (userid: string, category: string[]): Promise<IUser> => {
+    console.log(category)
     return await UserModel.findByIdAndUpdate(userid, {
         $pull: {
-            preferences: category
+            preferences: {
+                $in: category
+            }
         }
     }) as IUser  
+}
+export const getUserPreference = async (userid: string): Promise<IUser> => {
+    console.log(userid)
+    return await UserModel.findOne({_id: userid}, {
+        preferences: 1
+    }).populate("preferences").exec() as IUser
 }
 export const getFeaturedAuthors = async (page: number, limit: number): Promise<ISearchResult> => {
     const [authors, totalauthors] = await Promise.all([

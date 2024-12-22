@@ -55,7 +55,7 @@ const Userschema = new Schema<IUser>({
     }],
     preferences: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'categories'
+        ref: 'Categories'
     }]
 
 }, {timestamps: true})
