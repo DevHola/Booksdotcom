@@ -4,7 +4,7 @@ import { bestBooksFromGenre, bestSellers, getAllProduct, getProductById, getProd
 import { DecodedToken } from "../middlewares/passport";
 import { addFormatToProduct, removeFormatFromProduct, updateFormatPrice, updateStockInProduct } from "../services/format.services";
 import { cloudinaryImageUploadMethod } from "../middlewares/cloudinary";
-
+// add book preview upload
 export const createProduct = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const errors = validationResult(req)
     if(!errors.isEmpty()){
@@ -231,7 +231,7 @@ export const search = async (req: Request, res: Response, next: NextFunction): P
 }
 export const addFormat = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
    try {
-    const { type, downloadLink, product, stock, price } = req.body
+    const { type, product, stock, price } = req.body
     const data: any = {}
     if(type === 'physical'){
         data.type = type
@@ -240,10 +240,13 @@ export const addFormat = async (req: Request, res: Response, next: NextFunction)
         data.product = product
     }
     if(type !== 'physical'){
-        data.type = type
-        data.price = price
-        data.downloadLink = downloadLink
-        data.product = product
+        if(Array.isArray(req.files) && req.files.length > 0){
+            const urls = await cloudinaryImageUploadMethod(req.files, process.env.PRODUCTFILEDOWNLOADFOLDER as string)
+            data.downloadLink = urls[0]
+            data.type = type
+            data.price = price
+            data.product = product
+        }
     }
     
     

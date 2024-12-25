@@ -43,10 +43,12 @@ export const newProduct = async (data:any): Promise<IProduct> => {
     
 }
 export const getProductById = async (id:string): Promise<IProduct> => {
-    return await productModel.findById(id) as IProduct  
+    return await productModel.findById(id) as IProduct
+    // Book preview is required so we would not return format.url for all   
 }
 export const getAllProduct = async (page: number, limit: number): Promise<IProduct[]> => {
     return await productModel.find().skip((page - 1 ) * limit).limit(limit) as IProduct[]  
+        // Book preview is required so we would not return format.url for all
 }
 
 export const getProductByTitle = async (title:string): Promise<IProduct> => {

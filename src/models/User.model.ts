@@ -11,6 +11,7 @@ export interface IUser extends Document{
     otp?: string
     wishlist: string[]
     preferences: string[]
+    profile: String
 }
 const Userschema = new Schema<IUser>({
     username: {
@@ -55,8 +56,12 @@ const Userschema = new Schema<IUser>({
     }],
     preferences: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'categories'
-    }]
+        ref: 'Categories'
+    }],
+    profile: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'profiles'
+    }
 
 }, {timestamps: true})
 Userschema.pre('save', async function (this: IUser, next) {

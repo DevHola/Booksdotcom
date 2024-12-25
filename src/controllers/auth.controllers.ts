@@ -1,9 +1,10 @@
 import e, { type Request, type Response, type NextFunction } from 'express'
 import { type IUser } from '../models/User.model'
-import { activate, addToPreference, addToWishlist, assignUserRole, changePassword, checkOTP, extractor, generateToken, getFeaturedAuthors, getUserById, getUserWishlist, otpgen, registerUser, Regverificationmail, removeFromPreference, removeFromWishlist, Resetpasswordmail, UserByEmail, UserExist, ValidateUserPassword, verificationmail, verifyResetToken, verifyVerificationToken } from '../services/auth.services'
+import { activate, addToPreference, addToWishlist, assignUserRole, changePassword, checkOTP, extractor, generateToken, getFeaturedAuthors, getUserById, getUserPreference, getUserWishlist, otpgen, registerUser, Regverificationmail, removeFromPreference, removeFromWishlist, Resetpasswordmail, UserByEmail, UserExist, ValidateUserPassword, verificationmail, verifyResetToken, verifyVerificationToken } from '../services/auth.services'
 import { validationResult } from 'express-validator'
 import { DecodedToken } from '../middlewares/passport'
 import { reusableMail } from '../configs/delivermail'
+import { stat } from 'fs'
 export const register = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const errors = validationResult(req)
   if(!errors.isEmpty()){
@@ -325,10 +326,10 @@ export const userwishlist = async (req: Request, res: Response, next: NextFuncti
   try {
     const user = req.user as DecodedToken
     const userid = user.id
-    const list = await getUserWishlist(userid)
-    if(list){
+    const product = await getUserWishlist(userid)
+    if(product){
       return res.status(200).json({
-        list
+        product
       })
     }
   } catch (error) {
@@ -337,9 +338,10 @@ export const userwishlist = async (req: Request, res: Response, next: NextFuncti
 }
 export const addPreference = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
-    const category: string[] = req.body.preferences 
+    const category = req.body.preferences 
     const user = req.user as DecodedToken
     const userid = user.id
+    
     const add = await addToPreference(userid, category as string[])
     if(add){
       return res.status(200).json({
@@ -360,20 +362,34 @@ export const addPreference = async (req: Request, res: Response, next: NextFunct
 }
 export const removePreference = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
-    const categoryid = req.query.category
+    const categoryid = req.body.preferences 
     const user = req.user as DecodedToken
     const userid = user.id
-    const list = await removeFromPreference(userid, categoryid as string)
+    const list = await removeFromPreference(userid, categoryid as string[])
     if(list){
       return res.status(200).json({
-        list
+        status: true
       })
     }
   } catch (error) {
     next(error)
   }
 }
-export const featuredAuthors = async (req: Request, res: Response, next: NextFunction) => {
+export const userPreference = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const user = req.user as DecodedToken
+    const userid = user.id
+    const preferences = await getUserPreference(userid)
+    if(preferences){
+      return res.status(200).json({
+        preferences
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+}
+export const featuredAuthors = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 10
