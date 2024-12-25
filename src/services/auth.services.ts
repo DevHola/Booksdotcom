@@ -148,7 +148,7 @@ export const removeFromWishlist = async (userid: string, productid: string): Pro
         $pull: {
             wishlist: productid
         }
-    }) as IUser  
+    }, {new: true}) as IUser  
 }
 export const getUserWishlist = async (userid: string): Promise<IUser> => {
     return await UserModel.findOne({_id: userid}, {
@@ -180,10 +180,9 @@ export const removeFromPreference = async (userid: string, category: string[]): 
                 $in: category
             }
         }
-    }) as IUser  
+    }, {new: true}) as IUser  
 }
 export const getUserPreference = async (userid: string): Promise<IUser> => {
-    console.log(userid)
     return await UserModel.findOne({_id: userid}, {
         preferences: 1
     }).populate("preferences").exec() as IUser

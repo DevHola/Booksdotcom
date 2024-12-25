@@ -1,22 +1,39 @@
 import mongoose, { Schema, model, Model, Document} from "mongoose";
-interface IProfile extends Document {
-    biography: String
-    achievements: String[]
-    works: String[]
-    imgsrc: String
-    isFeatured: Boolean
-    author: String
+export interface IAchievement {
+    title: String;
+    description?: String;
+    date?: Date;
+}
+const AchievementSchema = new Schema<IAchievement>({
+    title: {
+        type: String,
+        required: true
+    },
+    description: {
+        type: String,
+        required: true
+    },
+    date: {
+        type: Date,
+        default: Date.now()
+    }
+});
+
+
+export interface IProfile extends Document {
+    biography?: String
+    achievements?: IAchievement[]
+    works?: mongoose.Schema.Types.ObjectId[]
+    imgsrc?: String
+    isFeatured?: Boolean
+    author?: mongoose.Schema.Types.ObjectId
 }
 const ProfileSchema = new Schema<IProfile>({
     biography: {
         type: String,
         lowercase: true
     },
-    achievements: [
-        {
-            type: String
-        }
-    ],
+    achievements: [AchievementSchema],
     works: [
         {
             type: mongoose.Schema.Types.ObjectId,
@@ -36,5 +53,5 @@ const ProfileSchema = new Schema<IProfile>({
     }
 
 }, { timestamps: true})
-const ProfileModel: Model<IProfile> = model<IProfile>('profile', ProfileSchema)
+const ProfileModel: Model<IProfile> = model<IProfile>('profiles', ProfileSchema)
 export default ProfileModel
