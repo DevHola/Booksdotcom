@@ -241,7 +241,7 @@ export const addFormat = async (req: Request, res: Response, next: NextFunction)
     }
     if(type !== 'physical'){
         if(Array.isArray(req.files) && req.files.length > 0){
-            const urls = await cloudinaryImageUploadMethod(req.files, process.env.PRODUCTPROFILEFOLDER as string)
+            const urls = await cloudinaryImageUploadMethod(req.files, process.env.PRODUCTFILEDOWNLOADFOLDER as string)
             data.downloadLink = urls[0]
             data.type = type
             data.price = price
