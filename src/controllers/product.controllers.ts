@@ -1,6 +1,6 @@
 import { Request,Response, NextFunction } from "express";
 import { validationResult } from "express-validator";
-import { bestBooksFromGenre, bestSellers, getAllProduct, getProductById, getProductByIsbn, getProductByTitle, getProductsByAuthor, getProductsByCategory, getProductsByPublisher, IProductFilter, ISearchResult, newArrivals, newProduct, searchProducts } from "../services/product.services";
+import { addPreviewFile, bestBooksFromGenre, bestSellers, getAllProduct, getProductById, getProductByIsbn, getProductByTitle, getProductsByAuthor, getProductsByCategory, getProductsByPublisher, IProductFilter, ISearchResult, newArrivals, newProduct, recentlySold, searchProducts } from "../services/product.services";
 import { DecodedToken } from "../middlewares/passport";
 import { addFormatToProduct, removeFormatFromProduct, updateFormatPrice, updateStockInProduct } from "../services/format.services";
 import { cloudinaryImageUploadMethod } from "../middlewares/cloudinary";
@@ -29,13 +29,14 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
             ISBN: Isbn as string,
             author: author as string[],
             publisher: publisher as string,
-            published_Date: published_Date as Date,
+            published_Date: new Date(published_Date) as Date,
             noOfPages: noOfPages as number,
             coverImage: urls as string[],
             language: language as string,
             categoryid: categoryid as any,
             user: id
         }
+        console.log(data)
         const product = await newProduct(data)
         if(product){
             return res.status(201).json({
@@ -381,4 +382,43 @@ export const bestSellersProducts = async (req: Request, res: Response, next: Nex
     } catch (error) {
         next(error)
     }
+}
+export const recentlySoldBooks = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    try {
+        const page = parseInt(req.query.page as string) || 1
+        const limit = parseInt(req.query.limit as string) || 10
+        const products = await recentlySold(page, limit)
+        if(products){
+            return res.status(200).json({
+                products
+            })
+        }
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const addProductPreviewFile = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    try {
+        const productid = req.query.productid
+        if(Array.isArray(req.files) && req.files.length > 0){
+            const urls = await cloudinaryImageUploadMethod(req.files, process.env.PRODUCTBOOKPREVIEWFOLDER as string)
+            const preview = await addPreviewFile(urls[0] as string, productid as string)
+            return res.status(200).json({
+                message:'preview added',
+                status: true
+            })
+        }
+    } catch (error) {
+        if(error instanceof Error){
+            if(error.message === 'Product not found'){
+                return res.status(404).json({
+                    message: 'Product not found'
+                })
+            } else {
+                next(error)
+            }
+        }
+    }
+    
 }

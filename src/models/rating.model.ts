@@ -14,18 +14,21 @@ const RatingSchema = new Schema<IRating>({
     rateNumber: {
         type: Number,
         required: true,
-        default: 0
+        default: 0,
+        index: true
     },
     review: {
         type: String
     },
     product: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'products'
+        ref: 'products',
+        index: true
     },
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'users'
+        ref: 'users',
+        index: true
     }
 
 }, { timestamps: true})

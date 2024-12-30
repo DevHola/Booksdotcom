@@ -193,7 +193,7 @@ export const getFeaturedAuthors = async (page: number, limit: number): Promise<I
             {
                 $lookup: {
                     from: 'profiles',
-                    localField:'profileid',
+                    localField:'profile',
                     foreignField:'_id',
                     as: 'profile'
                 }

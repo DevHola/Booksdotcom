@@ -18,6 +18,9 @@ export const removeFormatFromProduct = async (productid: string, formatid: any) 
             formats: { _id: formatid }
         }
     })
+    if (!format) {
+        throw new Error('Update failed');
+    }
 }
 export const updateStockInProduct = async (data:any, productid: string, formatid: string) => {
     const product = await productModel.findById(productid)

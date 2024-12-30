@@ -1,13 +1,7 @@
 import mongoose, { Schema, Document, Model, model } from 'mongoose'
-interface IOrder extends Document {
-    user: String,
-    products: String[]
-    status: Boolean
-    PaymentHandler: String
-    Ref: String
-}
+import { IProduct } from './product.model'
 interface IOrderProduct extends Document {
-    product: String
+    product: IProduct
     format: String
     price: Number
     quantity: Number
@@ -31,7 +25,22 @@ const OrderProduct = new Schema<IOrderProduct>({
         required: true
       }
 })
+
+export interface IOrder extends Document {
+    trackingCode: String
+    user: String
+    products: IOrderProduct[]
+    status: Boolean
+    paymentHandler: String
+    ref: String
+}
+
 const OrderSchema = new Schema<IOrder>({
+    trackingCode: {
+        type: String,
+        required: true,
+        index: true
+    },
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users'
@@ -42,12 +51,12 @@ const OrderSchema = new Schema<IOrder>({
         required: true,
         default: false
     },
-    PaymentHandler: {
+    paymentHandler: {
         type: String,
         required: true,
         lowercase: true
     },
-    Ref: {
+    ref: {
         type: String,
         unique: true
     }

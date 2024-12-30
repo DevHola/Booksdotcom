@@ -25,6 +25,7 @@ export interface IProductFilter {
   
 import productModel, { IProduct } from "../models/product.model";
 import CategoryModel from "../models/category.model";
+import OrderModel from "../models/order.model";
 export const newProduct = async (data:any): Promise<IProduct> => {
     const product = await productModel.create({
         title: data.title,
@@ -204,7 +205,7 @@ export const bestBooksFromGenre = async (category: string, page: number, limit: 
             }
         }
     
-    ]).sort({ averageRating: -1, numberOfReviews: -1 }).skip((page -1 ) * limit).limit(limit).exec(),
+    ]).sort({ averageRating: -1, numberOfReviews: -1 }).skip((page - 1 ) * limit).limit(limit).exec(),
     await productModel.find({ categoryid: searchcategory }).countDocuments()   
     ])
     return { products, currentPage: page, totalPage: Math.ceil(totalproduct/limit), totalProducts: totalproduct  } as ISearchResult
@@ -215,4 +216,33 @@ export const bestSellers = async (page: number, limit: number): Promise<ISearchR
         await productModel.countDocuments()
     ])
     return { products, currentPage: page, totalPage: Math.ceil(totalproduct/limit), totalProducts: totalproduct  } as ISearchResult    
+}
+export const recentlySold = async (page: number, limit: number): Promise<ISearchResult> => {
+    const getRecentOrder = await OrderModel.find({}, null, {limit: 50}).sort({ createdAt: -1 })
+    let productarray: any[] = []
+    for(let product of getRecentOrder){
+         productarray = productarray.concat(product.products)
+    }
+    //remove duplicates
+    productarray = [...new Set(productarray)];
+     const products = await productModel.find({_id: { $in: productarray } }).skip(( page -1 ) * limit).limit(limit)
+
+     return {products, currentPage: page, totalPage: Math.ceil(productarray.length/limit), totalProducts: productarray.length} as ISearchResult
+
+}
+export const addPreviewFile = async (url: string, productid: string): Promise<IProduct> => {
+    const product = await productModel.findById(productid)
+    if(!product){
+        throw new Error('Product not found')
+    }
+    const addpreviewfile = await productModel.findByIdAndUpdate(product._id, {
+        $set: {
+            previewFileurl: url
+        }
+    }, {new: true})
+    if(!addpreviewfile){
+        throw new Error('error updating preview file')
+    }
+    return addpreviewfile as IProduct
+    
 }
