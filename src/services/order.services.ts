@@ -47,11 +47,19 @@ export const getSingleOrderData = async (id: string): Promise<IOrder> => {
 export const webHook = async (data: any) => {
     const orderExist = await OrderModel.findOne({ trackingCode: data.trackingCode })
     if(orderExist){
-        throw new Error('order created')
+        throw new Error('tracking code exist')
     }
     const order = await createOrder(data)
     if(!order){
         throw new Error('Error creating order')
     }
     return order
+}
+export const checkTrackingCode = async (trackingCode: string): Promise<boolean> => { 
+    const order = await OrderModel.findOne({ trackingCode: trackingCode})
+    if(order){
+        return true
+    } else {
+        return false
+    }
 }

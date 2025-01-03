@@ -12,7 +12,10 @@ import AuthRouter from './routes/auth.route'
 import categoryRouter from './routes/category.route'
 import productRouter from './routes/product.route'
 import reviewRouter from './routes/review.route'
+import swaggerUi from 'swagger-ui-express'
+import swaggerJsdoc from 'swagger-jsdoc'
 import { seedcategory, seedproducts } from './models/seeders/seed'
+import { options } from './configs/docs'
 const app: Application = express()
 app.use(cors({
   origin: "*"
@@ -34,10 +37,18 @@ app.use((error: Error, req: Request, res: Response, next: NextFunction): any => 
 })
 app.use('/uploads',express.static(path.join(__dirname, '../', 'uploads')));
 // console.log(path.join(__dirname, '../', 'uploads'));
+
 app.use('/api/v1/auth', AuthRouter)
 app.use('/api/v1/category', categoryRouter)
 app.use('/api/v1/products', productRouter)
 app.use('/api/v1/review', reviewRouter)
+const specs = swaggerJsdoc(options);
+app.use(
+  "/api/v1/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(specs)
+);
+
 const startApp = async (PORT: any) => {
   const uri: string = process.env.MONGOURI ?? ''
   if (!uri) {

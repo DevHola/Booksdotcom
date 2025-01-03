@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { createOrder, getOrderByFilterQueries, getSingleOrderData, IOrderSearchResult, ISearchQueries } from "../services/order.services";
+import { checkTrackingCode, createOrder, getOrderByFilterQueries, getSingleOrderData, IOrderSearchResult, ISearchQueries, webHook } from "../services/order.services";
 import { DecodedToken } from "../middlewares/passport";
 import { IOrder } from "../models/order.model";
 
@@ -72,7 +72,14 @@ export const orderSingleData = async (req: Request, res: Response, next: NextFun
 }
 export const handlerWebhook = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
-        const orderData = req.body
+        const orderData = req.query.reference
+        // paystack api verification to return order data and confirm transaction status
+        const decodeData = JSON.parse('k')
+        const order = await webHook(decodeData)
+        return res.status(200).json({
+            status: true,
+            order
+        })
         
         
     } catch (error) {
