@@ -13,7 +13,7 @@ export const options = {
       },
       servers: [
         {
-          url: "https://booksdotcom.onrender.com",
+          url: "https://booksdotcom.onrender.com/api/v1",
         },
       ],
     },
