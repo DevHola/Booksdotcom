@@ -17,12 +17,14 @@ const Userschema = new Schema<IUser>({
     username: {
         type: String,
         required: true,
+        index: true,
         unique: true,
         lowercase: true
     },
     email: {
         type: String,
         required: true,
+        index: true,
         unique: true,
         lowercase: true
     },
@@ -33,6 +35,7 @@ const Userschema = new Schema<IUser>({
     isverified: {
         type: Boolean,
         required: true,
+        index: true,
         default: false
     },
     password: {

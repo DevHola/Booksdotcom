@@ -12,12 +12,8 @@ const AchievementSchema = new Schema<IAchievement>({
     description: {
         type: String,
         required: true
-    },
-    date: {
-        type: Date,
-        default: Date.now()
     }
-});
+}, { timestamps: true });
 
 
 export interface IProfile extends Document {
@@ -45,7 +41,8 @@ const ProfileSchema = new Schema<IProfile>({
     },
     isFeatured: {
         type: Boolean,
-        default: false 
+        default: false,
+        index: true 
     }, 
     author: {
         type: mongoose.Schema.Types.ObjectId,
