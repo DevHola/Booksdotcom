@@ -123,6 +123,13 @@ AuthRouter.post('/forget', forgetPassword)
  *     tags: [User]
  *     security:
  *       - Authorization: [] # Use Bearer Token for authorization
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bearer token for rest authorization - Get from forget password mail sent to user email
  *     requestBody:
  *       required: true
  *       content:
@@ -150,6 +157,13 @@ AuthRouter.put('/reset', ResetPassword)
  *     tags: [User]
  *     security:
  *       - Token: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bearer token for authorization
  *     responses:
  *       200:
  *         description: Authenticated user's information
@@ -166,6 +180,13 @@ AuthRouter.get('/user', passport.authenticate('jwt', { session: false }), authUs
  *     tags: [User]
  *     security:
  *       - Token: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bearer token for authorization - GET FROM REGISTER RESPONSE SHORT TIME TOKEN
  *     requestBody:
  *       required: true
  *       content:
@@ -190,6 +211,13 @@ AuthRouter.patch('/activation', activateAccount)
  *     tags: [User]
  *     security:
  *       - Token: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bearer token for authorization - GET FROM REGISTER RESPONSE SHORT TIME TOKEN
  *     requestBody:
  *       required: true
  *       content:
@@ -213,7 +241,14 @@ AuthRouter.patch('/assignrole', assignRole)
  *     summary: user initiate verification
  *     tags: [User]
  *     security:
- *       - bearerAuth: []
+ *       - Token: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bearer token for authorization - GET FROM REGISTER RESPONSE SHORT TIME TOKEN
  *     requestBody:
  *       required: true
  *       content:
@@ -276,6 +311,13 @@ AuthRouter.get('/callback/failure' , (req , res) => {
  *     tags: [Wishlist]
  *     security:
  *       - Token: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bearer token for authorization
  *     requestBody:
  *       required: true
  *        content:
@@ -304,6 +346,13 @@ AuthRouter.post('/user/wishlist', passport.authenticate('jwt', { session: false 
  *     tags: [Wishlist]
  *     security:
  *       - Token: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bearer token for authorization
  *     requestBody:
  *       required: true
  *       content:
@@ -330,6 +379,13 @@ AuthRouter.patch('/user/wishlist', passport.authenticate('jwt', { session: false
  *     tags: [Wishlist]
  *     security:
  *       - Token: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bearer token for authorization
  *     responses:
  *       200:
  *         description: Authenticated user's wishlist information
@@ -345,6 +401,13 @@ AuthRouter.get('/user/wishlist', passport.authenticate('jwt', { session: false }
  *     tags: [Preferences]
  *     security:
  *       - Token: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bearer token for authorization
  *     requestBody:
  *       required: true
  *       content:
@@ -371,6 +434,13 @@ AuthRouter.post('/user/preference', passport.authenticate('jwt', { session: fals
  *     tags: [Preferences]
  *     security:
  *       - Token: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bearer token for authorization
  *     requestBody:
  *       required: true
  *       content:
@@ -399,6 +469,13 @@ AuthRouter.patch('/user/preference', passport.authenticate('jwt', { session: fal
  *     tags: [Preferences]
  *     security:
  *       - Token: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bearer token for authorization
  *     responses:
  *       200:
  *         description: Authenticated user's Preference information
@@ -427,6 +504,13 @@ AuthRouter.get('/featured/authors', featuredAuthors)
  *     tags: [Authors]
  *     security:
  *       - Token: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bearer token for authorization
  *     requestBody:
  *       required: true
  *       content:
@@ -453,6 +537,13 @@ AuthRouter.post('/author/profile', passport.authenticate('jwt', { session: false
  *     tags: [Authors]
  *     security:
  *       - Token: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bearer token for authorization
  *     requestBody:
  *       required: true
  *       content:
@@ -493,6 +584,13 @@ AuthRouter.get('/author/profile', getAuthorProfile)
  *     tags: [Authors]
  *     security:
  *       - Token: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bearer token for authorization
  *     requestBody:
  *       required: true
  *       content:
@@ -519,6 +617,13 @@ AuthRouter.post('/author/achievement', passport.authenticate('jwt', { session: f
  *     tags: [Authors]
  *     security:
  *       - Token: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bearer token for authorization
  *     requestBody:
  *       required: true
  *       content:
