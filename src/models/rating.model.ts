@@ -42,7 +42,7 @@ RatingSchema.statics.addAndUpdateReview = async function (rateNumber: number, re
      })
      await rating.save()
      const ratings = await this.find({ product: product })
-     const totalreview = ratings.length + 1
+     // const totalreview = ratings.length + 1
      const averageRatingtotal = ratings.reduce((sum: any, rating: IRating) => sum + rating.rateNumber, 0) / ratings.length;
      await mongoose.model('products').findByIdAndUpdate(product, {
         $set: {

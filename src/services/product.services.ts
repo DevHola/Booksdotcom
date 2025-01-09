@@ -218,7 +218,7 @@ export const bestSellers = async (page: number, limit: number): Promise<ISearchR
     return { products, currentPage: page, totalPage: Math.ceil(totalproduct/limit), totalProducts: totalproduct  } as ISearchResult    
 }
 export const recentlySold = async (page: number, limit: number): Promise<ISearchResult> => {
-    const getRecentOrder = await OrderModel.find({}, null, {limit: 50}).sort({ createdAt: -1 })
+    const getRecentOrder = await OrderModel.find().sort({ createdAt: -1 }).limit(50)
     let productarray: any[] = []
     for(let product of getRecentOrder){
          productarray = productarray.concat(product.products)

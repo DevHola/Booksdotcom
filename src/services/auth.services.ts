@@ -305,7 +305,7 @@ export const Resetpasswordmail = async (resettoken: string, email: string): Prom
                       <p>Thank you,<br>The Team</p>
                   </div>
                   <div class="footer">
-                      <p>&copy; 2024 Your Company. All rights reserved.</p>
+                      <p>&copy; 2024 Booksdotcom. All rights reserved.</p>
                   </div>
               </div>
           </body>
@@ -384,7 +384,7 @@ export const Resetpasswordmail = async (resettoken: string, email: string): Prom
                       <p>Thank you,<br>The Team</p>
                   </div>
                   <div class="footer">
-                      <p>&copy; 2024 Your Company. All rights reserved.</p>
+                      <p>&copy; 2024 Booksdotcom. All rights reserved.</p>
                   </div>
               </div>
           </body>
@@ -459,7 +459,7 @@ export const Resetpasswordmail = async (resettoken: string, email: string): Prom
                       <p>Thank you,<br>The Team</p>
                   </div>
                   <div class="footer">
-                      <p>&copy; 2024 Your Company. All rights reserved.</p>
+                      <p>&copy; 2024 Booksdotcom. All rights reserved.</p>
                   </div>
               </div>
           </body>

@@ -13,6 +13,7 @@ export interface DecodedToken {
 const authorizationExtractor = function (req: Request): string | null {
   if ((req.headers.authorization != null) && req.headers.authorization.startsWith('Bearer ')) {
     const token = req.headers.authorization.split(' ')[1]
+    console.log(token)
     return token
   }
   return null

@@ -4,7 +4,6 @@ import { activate, addToPreference, addToWishlist, assignUserRole, changePasswor
 import { validationResult } from 'express-validator'
 import { DecodedToken } from '../middlewares/passport'
 import { reusableMail } from '../configs/delivermail'
-import { stat } from 'fs'
 export const register = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const errors = validationResult(req)
   if(!errors.isEmpty()){
@@ -27,19 +26,21 @@ export const register = async (req: Request, res: Response, next: NextFunction):
     const account = await UserExist(email) 
     const otp = await otpgen(account._id as string)
     const maildata = await Regverificationmail(email, otp)
-    console.log(otp)
-    res.status(200).json({
+    await reusableMail(maildata)
+    return res.status(200).json({
       status: 'true',
       token
     })
   } catch (error) {
     if(error instanceof Error){
-      return res.status(401).json({
-        message: 'User account already exist'
-      })
-    } else {
-      next(error)
-    }
+      if(error.message === 'Account already exists'){
+        return res.status(409).json({
+          message: 'User already exist'
+        })
+      } else {
+        next(error)
+      }
+    } 
   }
 }
 

@@ -1,7 +1,6 @@
 import nodemailer from 'nodemailer'
-const host = process.env.MAIL_HOST
-const user = process.env.MAIL_USER
-const pass = process.env.MAIL_PASS
+const user = process.env.GMAILUSER
+const pass = process.env.GMAILPASSWORD
 export interface mail{
   from: string
   to: string
@@ -11,20 +10,20 @@ export interface mail{
 export const reusableMail = async (data: mail) => {
   try {
     const transporter = nodemailer.createTransport({
-      host,
-      port: 2525,
+      service: 'gmail',
       auth: {
         user,
         pass
       }
     })
-    await transporter.sendMail({
-      from: data.from,
+    return await transporter.sendMail({
+      from: user,
       to: data.to,
       subject: data.subject,
       html: data.content
     })
   } catch (error) {
+      console.log(error)
       throw new Error(`mailing failed`)
   }
 }

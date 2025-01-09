@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { checkTrackingCode, createOrder, getOrderByFilterQueries, getSingleOrderData, IOrderSearchResult, ISearchQueries, webHook } from "../services/order.services";
 import { DecodedToken } from "../middlewares/passport";
 import { IOrder } from "../models/order.model";
+import crypto from 'crypto'
 
 export const createUserOrder = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
@@ -72,14 +73,18 @@ export const orderSingleData = async (req: Request, res: Response, next: NextFun
 }
 export const handlerWebhook = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
-        const orderData = req.query.reference
-        // paystack api verification to return order data and confirm transaction status
-        const decodeData = JSON.parse('k')
-        const order = await webHook(decodeData)
+        const hash = crypto.createHmac('sha512', process.env.PAYSTACKSECRET as string).update(JSON.stringify(req.body)).digest('hex');
+        if (hash == req.headers['x-paystack-signature']) {
+        const data = req.body;
+        if(data.event === 'charge.success') {
+        // Do something with event
+        const order = await webHook(data.data)
         return res.status(200).json({
             status: true,
             order
         })
+        }
+    }
         
         
     } catch (error) {

@@ -45,10 +45,13 @@ export const getSingleOrderData = async (id: string): Promise<IOrder> => {
     return await OrderModel.findById(id).populate('products.products').exec() as IOrder
 }
 export const webHook = async (data: any) => {
-    const orderExist = await OrderModel.findOne({ trackingCode: data.trackingCode })
+    const orderinformation = data.metadata
+    const newOrder = JSON.parse(orderinformation) 
+    const orderExist = await OrderModel.findOne({ trackingCode: newOrder.trackingCode })
     if(orderExist){
         throw new Error('tracking code exist')
     }
+    // need to review this
     const order = await createOrder(data)
     if(!order){
         throw new Error('Error creating order')
