@@ -158,7 +158,7 @@ AuthRouter.put('/reset', ResetPassword)
  *     security:
  *       - Token: []
  *     parameters:
- *       - in: header
+ *       - in: headers
  *         name: Authorization
  *         required: true
  *         schema:
