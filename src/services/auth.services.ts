@@ -118,7 +118,6 @@ export const verifyVerificationToken = async (token:string): Promise<string> => 
     
 }
 export const checkOTP = async (otpdata:string, id: string): Promise<boolean> => {
-    console.log(otpdata, id)
     const user = await UserModel.findOne({_id: id}) as IUser
     const verify = user.otp === otpdata
     return verify
@@ -389,7 +388,7 @@ export const Resetpasswordmail = async (resettoken: string, email: string): Prom
               </div>
           </body>
           </html>`
-    const subject = 'ACCOUNT PASSWORD RESET'
+    const subject = 'ACCOUNT VERIFICATION'
     const from = process.env.FROM ?? 'no-reply@yourcompany.com'
     const data: mail = {
       to: email,
@@ -464,7 +463,7 @@ export const Resetpasswordmail = async (resettoken: string, email: string): Prom
               </div>
           </body>
           </html>`
-    const subject = 'ACCOUNT PASSWORD RESET'
+    const subject = 'ACCOUNT VERIFICATION'
     const from = process.env.FROM ?? 'no-reply@yourcompany.com'
     const data: mail = {
       to: email,

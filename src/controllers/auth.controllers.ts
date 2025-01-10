@@ -93,7 +93,7 @@ export const forgetPassword = async (req: Request, res: Response, next: NextFunc
       const token = await generateToken(user, 'reset')
     if(token){
       const data = await Resetpasswordmail(token, email)
-      // reusableMail(data)
+      await reusableMail(data)
       return res.status(200).json({
         message: `Reset mail sent to ${email}`
       })
@@ -170,7 +170,6 @@ export const initActivation = async (req: Request, res: Response, next: NextFunc
   try {
     const { email } = req.body
     const user = await UserByEmail(email)
-    console.log(user)
     if(user.isverified !== false) {
       throw new Error('Account already Active')
     }
@@ -181,7 +180,7 @@ export const initActivation = async (req: Request, res: Response, next: NextFunc
     if(token){
       const otp = await otpgen(user._id as string)
       const data = await verificationmail(token, email, otp)
-      // reusableMail(data)
+      await reusableMail(data)
       return res.status(200).json({
         message: `Verification mail sent to ${email}`
       })
