@@ -3,6 +3,7 @@ import { forgetPassword, register, login, ResetPassword, authUser, activateAccou
 import passport from 'passport'
 import { addAuthorAchievement, createUserProfile, editUserProfile, getAuthorProfile, removeAuthorAchievement } from '../controllers/profile.controllers'
 import { upload } from '../middlewares/cloudinary'
+import { assignroleValidation, forgetValidation, initVerifyValidation, loginValidation, otpValidation, registerValidation, resetPasswordValidation } from '../middlewares/validation'
 const AuthRouter = express.Router()
 /**
  * @swagger
@@ -61,7 +62,7 @@ const AuthRouter = express.Router()
  *       400:
  *         description: Bad request
  */
-AuthRouter.post('/register', register)
+AuthRouter.post('/register', registerValidation, register)
 
 /**
  * @swagger
@@ -88,7 +89,7 @@ AuthRouter.post('/register', register)
  *       401:
  *         description: Incorrect credentials
  */
-AuthRouter.post('/login', login)
+AuthRouter.post('/login', loginValidation, login)
 
 /**
  * @swagger
@@ -113,7 +114,7 @@ AuthRouter.post('/login', login)
  *       404:
  *         description: User not found
  */
-AuthRouter.post('/forget', forgetPassword)
+AuthRouter.post('/forget', forgetValidation, forgetPassword)
 
 /**
  * @swagger
@@ -147,7 +148,7 @@ AuthRouter.post('/forget', forgetPassword)
  *         description: Bad request
  */
 
-AuthRouter.put('/reset', ResetPassword)
+AuthRouter.put('/reset', resetPasswordValidation, ResetPassword)
 
 /**
  * @swagger
@@ -202,7 +203,7 @@ AuthRouter.get('/user', passport.authenticate('jwt', { session: false }), authUs
  *       400:
  *         description: Bad request
  */
-AuthRouter.patch('/activation', activateAccount)
+AuthRouter.patch('/activation', otpValidation, activateAccount)
 /**
  * @swagger
  * /auth/assignrole:
@@ -233,7 +234,7 @@ AuthRouter.patch('/activation', activateAccount)
  *       400:
  *         description: Bad request
  */
-AuthRouter.patch('/assignrole', assignRole)
+AuthRouter.patch('/assignrole', assignroleValidation, assignRole)
 /**
  * @swagger
  * /auth/init/verify:
@@ -264,7 +265,7 @@ AuthRouter.patch('/assignrole', assignRole)
  *       400:
  *         description: Bad request
  */
-AuthRouter.post('/init/verify', initActivation)
+AuthRouter.post('/init/verify', initVerifyValidation, initActivation)
 AuthRouter.get('/', (req, res) => {
     res.send("<button><a href='/api/v1/auth/google'>Login With Google</a></button>")
 });
