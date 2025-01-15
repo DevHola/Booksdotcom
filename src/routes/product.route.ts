@@ -3,6 +3,7 @@ import { addFormat, addProductPreviewFile, bestBooksByGenre, bestSellersProducts
 import passport from 'passport'
 import { upload } from '../middlewares/cloudinary';
 import { createUserOrder, getOrderBySearchQuery, handlerWebhook, orderSingleData } from '../controllers/order.controllers';
+import { formatValidation, previewFileValidation, removeformatValidation, StockValidation, updatePriceValidation } from '../middlewares/validation';
 
 const productRouter = express.Router()
 productRouter.post('/', passport.authenticate('jwt', { session: false }),upload.array('img',4), createProduct)
@@ -15,12 +16,13 @@ productRouter.get('/isbn/:Isbn', productByIsbn)
 productRouter.get('/category/:category', ProductByCategory)
 productRouter.get('/author/:author', productByAuthor)
 productRouter.get('/publisher/:publisher', productByPublisher)
-productRouter.post('/format', passport.authenticate('jwt', { session: false }),  addFormat)
-productRouter.delete('/format/delete', passport.authenticate('jwt', { session: false }), removeFormat)
-productRouter.patch('/format/stock', passport.authenticate('jwt', { session: false }),  IncreaseStockForPhysicalFormat)
-productRouter.patch('/format/price', passport.authenticate('jwt', { session: false }),  updatePriceFormat)
-productRouter.patch('/book/preview', passport.authenticate('jwt', { session: false }), addProductPreviewFile )
-//homepage
+// format
+productRouter.post('/format', formatValidation, passport.authenticate('jwt', { session: false }), upload.array('file',1), addFormat)
+productRouter.delete('/format/delete', removeformatValidation, passport.authenticate('jwt', { session: false }), removeFormat)
+productRouter.patch('/format/stock', StockValidation, passport.authenticate('jwt', { session: false }),  IncreaseStockForPhysicalFormat)
+productRouter.patch('/format/price', updatePriceValidation, passport.authenticate('jwt', { session: false }),  updatePriceFormat)
+productRouter.patch('/book/preview', previewFileValidation, passport.authenticate('jwt', { session: false }), upload.array('file',1), addProductPreviewFile )
+// homepage
 productRouter.get('/new/arrival', newArrivalsProduct)
 productRouter.get('/best/category', bestBooksByGenre)
 productRouter.get('/best/sellers', bestSellersProducts)

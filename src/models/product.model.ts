@@ -64,8 +64,7 @@ const ProductSchema = new Schema<IProduct>({
         required: true
     }],
     previewFileurl: {
-        type: String,
-        required: true
+        type: String
     },
     averageRating: {
         type: Number,

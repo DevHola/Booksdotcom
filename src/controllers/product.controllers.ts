@@ -23,6 +23,7 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
               message: 'No files uploaded!',
             });
           }
+          console.log(urls)
         const data = {
             title: title as string,
             description: description as string,
@@ -36,11 +37,10 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
             categoryid: categoryid as any,
             user: id
         }
-        console.log(data)
         const product = await newProduct(data)
         if(product){
             return res.status(201).json({
-                status: 'success',
+                status: true,
                 product
             })
         }       
@@ -62,7 +62,7 @@ export const productById = async (req: Request, res: Response, next: NextFunctio
         const { id } = req.params
         const product = await getProductById(id)
         return res.status(200).json({
-            status: 'success',
+            status: true,
             product
         })
     } catch (error) {
@@ -82,7 +82,7 @@ export const productByTitle = async (req: Request, res: Response, next: NextFunc
         
         const product = await getProductByTitle(title as string)
         return res.status(200).json({
-            status: 'success',
+            status: true,
             product
         })
     } catch (error) {
@@ -96,7 +96,7 @@ export const getproductAll = async (req: Request, res: Response, next: NextFunct
         const limit = parseInt(req.query.limit as string) || 10
         const products = await getAllProduct(page, limit)
         return res.status(200).json({
-            status: 'success',
+            status: true,
             products
         })
     } catch (error) {
@@ -115,7 +115,7 @@ export const productByIsbn = async (req: Request, res: Response, next: NextFunct
         const { Isbn } = req.params
         const product = await getProductByIsbn(Isbn)
         return res.status(200).json({
-            status: 'success',
+            status: true,
             product
         })
     } catch (error) {
@@ -136,7 +136,7 @@ export const ProductByCategory = async (req: Request, res: Response, next: NextF
         const { category } = req.params
         const product = await getProductsByCategory(category, page, limit)
         return res.status(200).json({
-            status: 'success', 
+            status: true, 
             product
         })
     } catch (error) {
@@ -158,7 +158,7 @@ export const productByAuthor = async (req: Request, res: Response, next: NextFun
         const { author } = req.params
         const product = await getProductsByAuthor(author, page, limit)
         return res.status(200).json({
-            status: 'success',
+            status: true,
             product
         })
     } catch (error) {
@@ -179,7 +179,7 @@ export const productByPublisher = async (req: Request, res: Response, next: Next
         const { publisher } = req.params
         const product = await getProductsByPublisher(publisher, page, limit)
         return res.status(200).json({
-            status: 'success',
+            status: true,
             product
         })
     } catch (error) {
@@ -224,6 +224,7 @@ export const search = async (req: Request, res: Response, next: NextFunction): P
         }
         const products: ISearchResult = await searchProducts(filters as IProductFilter, page, limit)
         return res.status(200).json({
+            status: true,
             products
         })        
     } catch (error) {
@@ -231,7 +232,13 @@ export const search = async (req: Request, res: Response, next: NextFunction): P
     }
 }
 export const addFormat = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-   try {
+    const errors = validationResult(req)
+    if(!errors.isEmpty()){
+        return res.status(400).json({
+            errors: errors.array()
+        })
+    }
+    try {
     const { type, product, stock, price } = req.body
     const data: any = {}
     if(type === 'physical'){
@@ -253,7 +260,8 @@ export const addFormat = async (req: Request, res: Response, next: NextFunction)
     
     const format = await addFormatToProduct(data, product)
     return res.status(200).json({
-        message: 'success'
+        status: true,
+        format
     })
 } catch (error) {
     if(error instanceof Error){
@@ -268,11 +276,18 @@ export const addFormat = async (req: Request, res: Response, next: NextFunction)
    } 
 }
 export const removeFormat = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    const errors = validationResult(req)
+    if(!errors.isEmpty()){
+        return res.status(400).json({
+            errors: errors.array()
+        })
+    }
     try {
         const { productid, formatid } = req.body
         const format = await removeFormatFromProduct(productid, formatid)
         return res.status(200).json({
-            message: 'removed'
+            status: true,
+            format
         })
     } catch (error) {
         if(error instanceof Error){
@@ -287,6 +302,12 @@ export const removeFormat = async (req: Request, res: Response, next: NextFuncti
     }
 }
 export const IncreaseStockForPhysicalFormat = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    const errors = validationResult(req)
+    if(!errors.isEmpty()){
+        return res.status(400).json({
+            errors: errors.array()
+        })
+    }
     try {
         const { stock, productid, formatid } = req.body
         const data: any = {
@@ -294,7 +315,8 @@ export const IncreaseStockForPhysicalFormat = async (req: Request, res: Response
         }
         const format = await updateStockInProduct(data, productid, formatid)
         return res.status(200).json({
-            message: 'updated'
+            status: true,
+            format
         })
     } catch (error) {
         if(error instanceof Error){
@@ -309,6 +331,12 @@ export const IncreaseStockForPhysicalFormat = async (req: Request, res: Response
     }
 }
 export const updatePriceFormat = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    const errors = validationResult(req)
+    if(!errors.isEmpty()){
+        return res.status(400).json({
+            errors: errors.array()
+        })
+    }
     try {
         const { price, productid, formatid } = req.body
         const data: any = {
@@ -316,7 +344,8 @@ export const updatePriceFormat = async (req: Request, res: Response, next: NextF
         }
         const format = await updateFormatPrice(data, productid, formatid)
         return res.status(200).json({
-            message: 'updated'
+            status: true,
+            format
         })
     } catch (error) {
         if(error instanceof Error){
@@ -332,12 +361,12 @@ export const updatePriceFormat = async (req: Request, res: Response, next: NextF
 }
 export const newArrivalsProduct = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
-        const query = req.query.q || ''
         const page = parseInt(req.query.page as string) || 1
         const limit = parseInt(req.query.limit as string) || 10
         const products = await newArrivals(page, limit)
         if(products) {
             return res.status(200).json({
+                status: true,
                 products
             })
         }
@@ -353,6 +382,7 @@ export const bestBooksByGenre = async (req: Request, res: Response, next: NextFu
         const products = await bestBooksFromGenre(category, page, limit)
         if(products){
             return res.status(200).json({
+                status: true,
                 products
             })
         }
@@ -376,6 +406,7 @@ export const bestSellersProducts = async (req: Request, res: Response, next: Nex
         const products = await bestSellers(page, limit)
         if(products){
             return res.status(200).json({
+                status: true,
                 products
             })
         }
@@ -390,6 +421,7 @@ export const recentlySoldBooks = async (req: Request, res: Response, next: NextF
         const products = await recentlySold(page, limit)
         if(products){
             return res.status(200).json({
+                status: true,
                 products
             })
         }
@@ -399,6 +431,12 @@ export const recentlySoldBooks = async (req: Request, res: Response, next: NextF
 }
 
 export const addProductPreviewFile = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    const errors = validationResult(req)
+    if(!errors.isEmpty()){
+        return res.status(400).json({
+            errors: errors.array()
+        })
+    }
     try {
         const productid = req.query.productid
         if(Array.isArray(req.files) && req.files.length > 0){

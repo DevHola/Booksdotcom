@@ -16,7 +16,7 @@ export const addReview = async (req: Request, res: Response, next:NextFunction):
         const id = user.id
         const add = await createReview(rateNumber, review, product, id)
         return res.status(200).json({
-            message:'success',
+            status: true,
             review: add
         })
     } catch (error) {
@@ -24,11 +24,17 @@ export const addReview = async (req: Request, res: Response, next:NextFunction):
     }
 }
 export const getProductReviews = async (req: Request, res: Response, next:NextFunction): Promise<any> => {
+    const errors = validationResult(req)
+    if(!errors.isEmpty()){
+        return res.status(400).json({
+            errors: errors.array()
+        })
+    }
     try {
         const productid = req.params.id
         const reviews = await getProductReview(productid)
         return res.status(200).json({
-            message: 'success',
+            status: true,
             reviews
         })
     } catch (error) {
@@ -37,32 +43,43 @@ export const getProductReviews = async (req: Request, res: Response, next:NextFu
     
 }
 export const editProductReview = async (req: Request, res: Response, next:NextFunction): Promise<any> => {
+    const errors = validationResult(req)
+    if(!errors.isEmpty()){
+        return res.status(400).json({
+            errors: errors.array()
+        })
+    }
     try {
-        const { reviewid, ratenumber, text } = req.body
+        const { reviewid, ratenumber, review } = req.body
         const user = req.user as DecodedToken
         const userid = user.id
         const reviewcheck = await getsingleReview(reviewid)
-        console.log(userid , reviewcheck.user)
         if(reviewcheck.user != userid ){
             return res.status(401).json({
                 message: 'unauthorised'
             })
         }
-        const review = await editReview(reviewid, ratenumber, text)
+        const reviews = await editReview(reviewid, ratenumber, review)
         return res.status(200).json({
-            message: 'success',
-            review
+            status: true,
+            reviews
         })
     } catch (error) {
         next(error)
     }
 }
 export const getUserProductReviews = async (req: Request, res: Response, next:NextFunction): Promise<any> => {
+    const errors = validationResult(req)
+    if(!errors.isEmpty()){
+        return res.status(400).json({
+            errors: errors.array()
+        })
+    }
     try {
         const userid = req.params.id
         const reviews = await getUserReviews(userid)
         return res.status(200).json({
-            message:'success',
+            status: true,
             reviews
         })
     } catch (error) {
@@ -70,11 +87,17 @@ export const getUserProductReviews = async (req: Request, res: Response, next:Ne
     }
 }
 export const getReview = async (req: Request, res: Response, next:NextFunction): Promise<any> => {
+    const errors = validationResult(req)
+    if(!errors.isEmpty()){
+        return res.status(400).json({
+            errors: errors.array()
+        })
+    }
     try {
         const id = req.params.id
         const review = await getsingleReview(id)
         return res.status(200).json({
-            message:'success',
+            status: true,
             review
         })
     } catch (error) {

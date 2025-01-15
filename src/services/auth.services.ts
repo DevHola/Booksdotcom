@@ -43,6 +43,10 @@ export const UserByEmail = async (email:string): Promise<IUser> => {
 export const UserExist = async (email:string): Promise<IUser> => {
     const user = await UserModel.findOne({email: email})
     return user as IUser
+}
+export const UsernameExist = async (username:string): Promise<IUser> => {
+    const user = await UserModel.findOne({username: username})
+    return user as IUser
 } 
 
 export const CheckUserExist = async (id:string): Promise<IUser> => {
@@ -380,6 +384,7 @@ export const Resetpasswordmail = async (resettoken: string, email: string): Prom
                       </p>
                       <h1> Verification code </h1>
                       <p>${otp}</p>
+                      <p>token: ${resettoken}</p>
                       <p>Thank you,<br>The Team</p>
                   </div>
                   <div class="footer">

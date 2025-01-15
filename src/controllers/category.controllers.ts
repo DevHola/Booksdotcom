@@ -11,8 +11,10 @@ export const createCategory = async (req: Request, res: Response, next: NextFunc
     }
     try {
         const { name } = req.body
-        await NewCategory(name as string)
+        const category = await NewCategory(name as string)
         return res.status(200).json({
+            status: true,
+            category,
             message: 'category created'
         })
         
@@ -32,6 +34,7 @@ export const editACategory = async (req: Request, res: Response, next: NextFunct
     const id = req.params.id
     await editCategory(id, name)  
     return res.status(200).json({
+        status: true,
         message: 'category edited'
     })   
     } catch (error) {
@@ -48,8 +51,10 @@ export const GetCategoryByName = async (req: Request, res: Response, next: NextF
     try {
         const { name } = req.body
         const category = await getCategoryByName(name as string)
-        console.log(category)
-        return res.status(200).json({category})
+        return res.status(200).json({
+            status: true,    
+            category
+        })
     } catch (error) {
         next(error)
     }
@@ -65,7 +70,10 @@ export const GetCategoryById = async (req: Request, res: Response, next: NextFun
     try {
         const id = req.params.id as string
         const category = await getCategoryByID(id)
-        return res.status(200).json(category)
+        return res.status(200).json({
+            status: true,
+            category
+        })
     } catch (error) {
         next(error)
     }
@@ -73,7 +81,10 @@ export const GetCategoryById = async (req: Request, res: Response, next: NextFun
 export const GetCategories = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const categories = await Categories()
-        return res.status(200).json(categories)
+        return res.status(200).json({
+            status: true,
+            categories
+        })
     } catch (error) {
         next(error)
     }
