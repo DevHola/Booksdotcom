@@ -19,7 +19,6 @@ const AchievementSchema = new Schema<IAchievement>({
 export interface IProfile extends Document {
     biography?: String
     achievements?: IAchievement[]
-    works?: mongoose.Schema.Types.ObjectId[]
     imgsrc?: String
     isFeatured?: Boolean
     author?: mongoose.Schema.Types.ObjectId
@@ -30,12 +29,6 @@ const ProfileSchema = new Schema<IProfile>({
         lowercase: true
     },
     achievements: [AchievementSchema],
-    works: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'products'
-        }
-    ],
     imgsrc: {
         type: String
     },

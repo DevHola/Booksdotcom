@@ -1,6 +1,6 @@
-import e, { type Request, type Response, type NextFunction } from 'express'
+import { type Request, type Response, type NextFunction } from 'express'
 import { type IUser } from '../models/User.model'
-import { activate, addToPreference, addToWishlist, assignUserRole, changePassword, checkOTP, extractor, generateToken, getFeaturedAuthors, getUserById, getUserPreference, getUserWishlist, otpgen, registerUser, Regverificationmail, removeFromPreference, removeFromWishlist, Resetpasswordmail, UserByEmail, UserExist, ValidateUserPassword, verificationmail, verifyResetToken, verifyVerificationToken } from '../services/auth.services'
+import { activate, addToPreference, addToWishlist, assignUserRole, changePassword, checkOTP, extractor, generateToken, getFeaturedAuthors, getUserById, getUserPreference, getUserWishlist, otpgen, registerUser, Regverificationmail, removeFromPreference, removeFromWishlist, Resetpasswordmail, UserByEmail, UserExist, UsernameExist, ValidateUserPassword, verificationmail, verifyResetToken, verifyVerificationToken } from '../services/auth.services'
 import { validationResult } from 'express-validator'
 import { DecodedToken } from '../middlewares/passport'
 import { reusableMail } from '../configs/delivermail'
@@ -18,10 +18,6 @@ export const register = async (req: Request, res: Response, next: NextFunction):
       email,
       password
     }
-    const user = await UserExist(email)
-    if(user){
-      throw new Error('Account already exists')
-    }
     const token = await registerUser(data as IUser, 'local')
     const account = await UserExist(email) 
     const otp = await otpgen(account._id as string)
@@ -34,9 +30,11 @@ export const register = async (req: Request, res: Response, next: NextFunction):
   } catch (error) {
     if(error instanceof Error){
       if(error.message === 'Account already exists'){
-        return res.status(409).json({
+        return res.status(400).json({
           message: 'User already exist'
         })
+      } else if (error.message === 'Username already inuse'){
+
       } else {
         next(error)
       }
@@ -89,20 +87,17 @@ export const forgetPassword = async (req: Request, res: Response, next: NextFunc
   try {
     const { email } = req.body
     const user = await UserByEmail(email as string)
-    if(user.provider ==='local') {
       const token = await generateToken(user, 'reset')
+      console.log(token)
     if(token){
       const data = await Resetpasswordmail(token, email)
       await reusableMail(data)
       return res.status(200).json({
+        status: true,
         message: `Reset mail sent to ${email}`
       })
     }
-    } else {
-      return res.status(200).json({
-        message: `Proceed to login via social logins`
-      })
-    }
+    
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === 'Account not found') {
@@ -137,7 +132,7 @@ export const ResetPassword = async (req: Request, res: Response, next: NextFunct
     if (error instanceof Error) {
       if (error.message === 'authentication failed') {
         return res.status(401).json({
-          message: 'Incorrect credentials'
+          message: 'Unauthorized'
         })
       } else {
         next(error)
@@ -146,12 +141,19 @@ export const ResetPassword = async (req: Request, res: Response, next: NextFunct
   }
 }
 export const authUser = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const errors = validationResult(req)
+  if(!errors.isEmpty()){
+      return res.status(400).json({
+          errors: errors.array()
+      })
+  }
   try {
     if(req.user){
       const userdata = req.user as DecodedToken
       const id = userdata.id
       const user = await getUserById(id)
       return res.status(200).json({
+        status: true,
         user
       })
     }
@@ -170,39 +172,20 @@ export const initActivation = async (req: Request, res: Response, next: NextFunc
   try {
     const { email } = req.body
     const user = await UserByEmail(email)
-    if(user.isverified !== false) {
-      throw new Error('Account already Active')
-    }
-    if(user.provider !== 'local'){
-      throw new Error('not local')
-    }
     const token = await generateToken(user, 'verification')
+    console.log(token)
     if(token){
       const otp = await otpgen(user._id as string)
       const data = await verificationmail(token, email, otp)
       await reusableMail(data)
       return res.status(200).json({
+        status: true,
         message: `Verification mail sent to ${email}`
       })
     }
   } catch (error) {
-    if(error instanceof Error){
-      if(error.message === 'Account not found'){
-        return res.status(404).json({
-          message: 'Account not found'
-        })
-      } else if (error.message === 'Account already Active'){
-        return res.status(401).json({
-          message: 'Account is already Active'
-        })
-      } else if(error.message === 'not local'){
-        return res.status(401).json({
-          message: 'Proceed to login via socials'
-        })
-      }
-    }
+    next(error)
   }
-  
 }
 
 export const activateAccount = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -223,6 +206,7 @@ export const activateAccount = async (req: Request, res: Response, next: NextFun
       }
         const user = await activate(userId)
         return res.status(200).json({
+          status: true,
           message: 'Account activated',
           provider: user.provider,
           role: user.role
@@ -258,6 +242,7 @@ export const assignRole = async (req: Request, res: Response, next: NextFunction
     if(userId){
       const user = await assignUserRole(userId, role)
       return res.status(200).json({
+        status: true,
         message: 'Role assigned',
         provider: user.provider,
         role: user.role
@@ -278,16 +263,27 @@ export const assignRole = async (req: Request, res: Response, next: NextFunction
   }
 }
 export const addToWish = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const errors = validationResult(req)
+  if(!errors.isEmpty()){
+      return res.status(400).json({
+          errors: errors.array()
+      })
+  }
   try {
     const productid = req.query.product
     const user = req.user as DecodedToken
     const userid = user.id
     const add = await addToWishlist(userid, productid as string)
-    if(add){
-      return res.status(200).json({
-        status: true
+    if(!add){
+      return res.status(400).json({
+        status: false,
+        message: "Product not added to wishlist",
       })
     }
+    return res.status(200).json({
+      status: true,
+      wishlist: add.wishlist
+    })
     
   } catch (error) {
     if(error instanceof Error){
@@ -307,28 +303,45 @@ export const addToWish = async (req: Request, res: Response, next: NextFunction)
   }
 }
 export const removewishlist = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const errors = validationResult(req)
+  if(!errors.isEmpty()){
+      return res.status(400).json({
+          errors: errors.array()
+      })
+  }
   try {
     const productid = req.query.product
     const user = req.user as DecodedToken
     const userid = user.id
     const remove = await removeFromWishlist(userid, productid as string)
-    if(remove) {
-      return res.status(200).json({
-        status: true,
-        productid
+    if(!remove) {
+      return res.status(400).json({
+        status: false,
+        message: "Product not removed from wishlist",
       })
     }
+    return res.status(200).json({
+      status: true,
+      productid
+    })
   } catch (error) {
     next(error)
   }
 }
 export const userwishlist = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const errors = validationResult(req)
+  if(!errors.isEmpty()){
+      return res.status(400).json({
+          errors: errors.array()
+      })
+  }
   try {
     const user = req.user as DecodedToken
     const userid = user.id
     const product = await getUserWishlist(userid)
     if(product){
       return res.status(200).json({
+        status: true,
         product
       })
     }
@@ -337,17 +350,28 @@ export const userwishlist = async (req: Request, res: Response, next: NextFuncti
   }
 }
 export const addPreference = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const errors = validationResult(req)
+  if(!errors.isEmpty()){
+      return res.status(400).json({
+          errors: errors.array()
+      })
+  }
   try {
     const category = req.body.preferences 
     const user = req.user as DecodedToken
     const userid = user.id
     
-    const add = await addToPreference(userid, category as string[])
-    if(add){
-      return res.status(200).json({
-        status: true
+    const list = await addToPreference(userid, category as string[])
+    if(!list){
+      return res.status(400).json({
+        status: false,
+        message: "Category not added to wishlist",
       })
     }
+    return res.status(200).json({
+      status: true,
+      preferences: list.preferences
+    })
   } catch (error) {
     if(error instanceof Error){
       if(error.message === 'user not found'){
@@ -361,27 +385,45 @@ export const addPreference = async (req: Request, res: Response, next: NextFunct
   }
 }
 export const removePreference = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const errors = validationResult(req)
+  if(!errors.isEmpty()){
+      return res.status(400).json({
+          errors: errors.array()
+      })
+  }
   try {
     const categoryid = req.body.preferences 
     const user = req.user as DecodedToken
     const userid = user.id
     const list = await removeFromPreference(userid, categoryid as string[])
-    if(list){
-      return res.status(200).json({
-        status: true
+    if(!list){
+      return res.status(400).json({
+        status: false,
+        message: "Category not removed from wishlist",
       })
     }
+    return res.status(200).json({
+      status: true,
+      preference: list.preferences
+    })
   } catch (error) {
     next(error)
   }
 }
 export const userPreference = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const errors = validationResult(req)
+  if(!errors.isEmpty()){
+      return res.status(400).json({
+          errors: errors.array()
+      })
+  }
   try {
     const user = req.user as DecodedToken
     const userid = user.id
     const preferences = await getUserPreference(userid)
     if(preferences){
       return res.status(200).json({
+        status: true,
         preferences
       })
     }
@@ -396,6 +438,7 @@ export const featuredAuthors = async (req: Request, res: Response, next: NextFun
     const authors = await getFeaturedAuthors(page, limit)
     if(authors){
       return res.status(200).json({
+        status: true,
         authors
       })
     }

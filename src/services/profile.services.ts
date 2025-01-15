@@ -25,10 +25,7 @@ export const createProfile = async (data: IProfile): Promise<IProfile> => {
 export const editProfile = async (data: IProfile, userId: String ): Promise<IProfile> => {
     const userprofile = await UserModel.findById(userId, {profile: 1})
     const profile = await ProfileModel.findByIdAndUpdate(userprofile, {
-        $set: {
-                biography: data.biography,
-                imgsrc: data.imgsrc,           
-        }
+        $set: data
     }, { new: true })
     if (!profile) {
         throw new Error('Update failed');
