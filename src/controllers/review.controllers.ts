@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import { validationResult } from "express-validator";
 import { DecodedToken } from "../middlewares/passport";
 import { createReview, editReview, getProductReview, getsingleReview, getUserReviews } from "../services/review.services";
-import { IRating } from "../models/rating.model";
 export const addReview = async (req: Request, res: Response, next:NextFunction): Promise<any> => {
     const error = validationResult(req)
     if(!error.isEmpty()){

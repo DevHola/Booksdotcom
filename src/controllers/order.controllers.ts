@@ -1,43 +1,52 @@
 import { Request, Response, NextFunction } from "express";
-import { checkTrackingCode, createOrder, getOrderByFilterQueries, getSingleOrderData, IOrderSearchResult, ISearchQueries, webHook } from "../services/order.services";
+import { createOrder, genTrackingCode, getAuthUserOrder, getCreatorOrders, getCreatorSingleOrder, getSingleOrderData, IOrderSearchResult, vBS, webHook } from "../services/order.services";
 import { DecodedToken } from "../middlewares/passport";
 import { IOrder } from "../models/order.model";
 import crypto from 'crypto'
+import { groupProducts, IProductDefuse } from "../services/product.services";
+import { IOrderProduct } from "../models/suborder.model";
+
 
 export const createUserOrder = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const user = req.user as DecodedToken
         const id = user.id
-        const { trackingCode, products, status, paymentHandler, ref } = req.body
+        const trackingCode = await genTrackingCode(user.username)
+        const products = req.body.products as IProductDefuse[]
+        const status = req.body.status
+        const paymentHandler = req.body.paymentHandler
+        const ref = req.body.ref
+        const total = req.body.total
         const data: any ={
             trackingCode: trackingCode as string,
-            products: products as string[],
+            user: id as string,
+            total: total as number,
             status: status as boolean,
             paymentHandler: paymentHandler as string,
             ref: ref as string
         }
-        const order:IOrder = await createOrder(data as IOrder)
+        // CREATE ORDER
+        // GROUP PRODUCTS BY USER - returns an object with key as user id and value as array of products
+        const [order, groupProductslist] = await Promise.all([await createOrder(data as IOrder), await groupProducts(products)])
+        const orderid = order._id
+        const distribute = await vBS(groupProductslist, orderid as string)        
         return res.status(200).json({
             status: true,
             order
         })
-        
     } catch (error) {
         next(error)
     }
     
 }
-export const getOrderBySearchQuery = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+
+export const getUserOrder = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const page = parseInt(req.query.page as string) || 1
         const limit = parseInt(req.query.page as string) || 10
-        const filters = {
-            trackingCode: req.query.trackingCode,
-            status: req.query.status,
-            ref: req.query.ref,
-            user: req.query.user
-        }
-        const orders: IOrderSearchResult = await getOrderByFilterQueries(filters as ISearchQueries, page, limit,)
+        const user = req.user as DecodedToken
+        const id = user.id
+        const orders: IOrderSearchResult = await getAuthUserOrder(id, page, limit)
         return res.status(200).json({
             status: true,
             orders
@@ -50,13 +59,19 @@ export const getOrderBySearchQuery = async (req: Request, res: Response, next: N
 export const orderSingleData = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const orderid = req.params.id
+        const productarray: IOrderProduct[] = []
         const order = await getSingleOrderData(orderid)
         if(!order){
             throw new Error('order does not exist')
         }
+        order.map((items)=> {
+            items.products.map((item)=>{
+                productarray.push(item)
+            })
+        })
         return res.status(200).json({
             status: true,
-            order
+            order: productarray
         })
         
     } catch (error) {
@@ -69,6 +84,35 @@ export const orderSingleData = async (req: Request, res: Response, next: NextFun
                 next(error)
             }
         }
+    }
+}
+export const allCreatorOrder = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    try {
+        const page = parseInt(req.query.page as string) || 1
+        const limit = parseInt(req.query.limit as string) || 10
+        const user = req.user as DecodedToken
+        const id = user.id
+        const orders = getCreatorOrders(id, page, limit)
+        return res.status(200).json({
+            status: true,
+            orders
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+export const allCreatorOrderSuborder = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    try {
+        const orderid = req.query.orderid as string
+        const user = req.user as DecodedToken
+        const id = user.id
+        const suborders = await getCreatorSingleOrder(id, orderid)
+        return res.status(200).json({
+            status: true,
+            suborders
+        })
+    } catch (error) {
+        next(error)
     }
 }
 export const handlerWebhook = async (req: Request, res: Response, next: NextFunction): Promise<any> => {

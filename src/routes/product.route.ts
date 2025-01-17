@@ -2,7 +2,7 @@ import express from 'express'
 import { addFormat, addProductPreviewFile, bestBooksByGenre, bestSellersProducts, createProduct, getproductAll, IncreaseStockForPhysicalFormat, newArrivalsProduct, productByAuthor, ProductByCategory, productById, productByIsbn, productByPublisher, productByTitle, productEdit, recentlySoldBooks, removeFormat, search, updatePriceFormat } from '../controllers/product.controllers'
 import passport from 'passport'
 import { upload } from '../middlewares/cloudinary';
-import { createUserOrder, getOrderBySearchQuery, handlerWebhook, orderSingleData } from '../controllers/order.controllers';
+import { createUserOrder, getUserOrder, handlerWebhook, orderSingleData } from '../controllers/order.controllers';
 import { formatValidation, previewFileValidation, removeformatValidation, StockValidation, updatePriceValidation } from '../middlewares/validation';
 
 const productRouter = express.Router()
@@ -29,8 +29,8 @@ productRouter.get('/best/sellers', bestSellersProducts)
 productRouter.get('/recently/sold', recentlySoldBooks)
 // order
 productRouter.post('/order', passport.authenticate('jwt', { session: false }), createUserOrder)
-productRouter.get('/orders', passport.authenticate('jwt', { session: false }), getOrderBySearchQuery)
-productRouter.get('/order/:id', passport.authenticate('jwt', { session: true }), orderSingleData)
+productRouter.get('/user/order', passport.authenticate('jwt', { session: false }), getUserOrder)
+productRouter.get('/order/:id', passport.authenticate('jwt', { session: false }), orderSingleData)
 // paystack webhook
 productRouter.post('/webhook/order', handlerWebhook)
 export default productRouter

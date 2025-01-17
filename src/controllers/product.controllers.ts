@@ -23,7 +23,6 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
               message: 'No files uploaded!',
             });
           }
-          console.log(urls)
         const data = {
             title: title as string,
             description: description as string,

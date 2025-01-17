@@ -1,36 +1,10 @@
 import mongoose, { Schema, Document, Model, model } from 'mongoose'
-import { IProduct } from './product.model'
-interface IOrderProduct extends Document {
-    product: IProduct
-    format: String
-    price: Number
-    quantity: Number
-}
-const OrderProduct = new Schema<IOrderProduct>({
-    product: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product',
-        required: true
-      },
-      format: {
-        type: String,
-        required: true
-      },
-      price: {
-        type: Number,
-        required: true
-      },
-      quantity: {
-        type: Number,
-        required: true
-      }
-})
-
 export interface IOrder extends Document {
     trackingCode: String
     user: String
-    products: IOrderProduct[]
+    creators: String[]
     status: Boolean
+    total: Number
     paymentHandler: String
     ref: String
 }
@@ -45,11 +19,20 @@ const OrderSchema = new Schema<IOrder>({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users'
     },
-    products: [OrderProduct],
+    creators: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref:'users'
+        }
+    ],
     status: {
         type: Boolean,
         required: true,
         default: false
+    },
+    total: {
+        type: Number,
+        required: true
     },
     paymentHandler: {
         type: String,

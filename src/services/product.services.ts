@@ -26,6 +26,8 @@ export interface IProductFilter {
 import productModel, { IProduct } from "../models/product.model";
 import CategoryModel from "../models/category.model";
 import OrderModel from "../models/order.model";
+import SubOrderModel from "../models/suborder.model";
+import { Console, group } from "console";
 export const newProduct = async (data:any): Promise<IProduct> => {
     const product = await productModel.create({
         title: data.title,
@@ -219,8 +221,10 @@ export const bestSellers = async (page: number, limit: number): Promise<ISearchR
 }
 export const recentlySold = async (page: number, limit: number): Promise<ISearchResult> => {
     const getRecentOrder = await OrderModel.find().sort({ createdAt: -1 }).limit(50)
+    const getSubOrder = await SubOrderModel.find({orderid: { $in: getRecentOrder}})
+    // NEEDS REFACTORING & Testing
     let productarray: any[] = []
-    for(let product of getRecentOrder){
+    for(let product of getSubOrder){
          productarray = productarray.concat(product.products)
     }
     //remove duplicates
@@ -244,5 +248,42 @@ export const addPreviewFile = async (url: string, productid: string): Promise<IP
         throw new Error('error updating preview file')
     }
     return addpreviewfile as IProduct
+    
+}
+export const getProductAuthoor = async (productid: string): Promise<IProduct> => {
+    const user = await productModel.findById(productid, {user: 1, _id: 0})
+    if(!user){
+        throw new Error('Product not found')
+    }
+    return user as IProduct
+}
+export interface IProductDefuse {
+    product: string,
+    quantity: number,
+    format: string,
+    price: number
+}
+export interface POA {
+    products: IProductDefuse[],
+}
+export const groupProducts = async (products: IProductDefuse[]): Promise<any> => {
+    const grouped: { [key: string]: IProductDefuse[] } = {}
+
+    for (const product of products) {
+        const author: string = (await getProductAuthoor(product.product)).user as string
+
+        if (!grouped[author]) grouped[author] = []
+        grouped[author].push(product)
+    }
+
+    return grouped
+}
+export const updateStockOrderInitiation = async (productId: string, quantity: number ) => {
+    const value = quantity * - 1
+    await productModel.updateOne({_id: productId, 'formats.type': 'physical'}, {
+        $inc: {
+            'formats.$.stock': value
+        }
+    },{ upsert: true })
     
 }

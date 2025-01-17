@@ -33,6 +33,9 @@ export const registerUser = async (data: IUser, type: string): Promise<string> =
         throw new Error('Token generation failed');
     }
 }
+export const limitUser = async (email: string): Promise<IUser> => {
+    return await UserModel.findOne({email: email},{email: 1, _id: 1, role: 1, username: 1, isverified: 1}) as IUser
+}
 export const UserByEmail = async (email:string): Promise<IUser> => {
     const user = await UserModel.findOne({email: email})
     if(!user) {
@@ -223,6 +226,14 @@ export const getFeaturedAuthors = async (page: number, limit: number): Promise<I
     ])
      
     return { authors, currentPage: page, totalPage: Math.ceil(totalauthors/limit), totalauthors }
+}
+export const creditAuthorAccount = async (author: string, total: number): Promise<void> => {
+    const user = await UserModel.findById(author)
+    await ProfileModel.findByIdAndUpdate(user?.profile, {
+        $inc: {
+            balance: total
+        }
+    }, { new: true })
 }
 export const extractor = async (req:any): Promise<string> => {
     const headers = req.headers['authorization']

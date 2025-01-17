@@ -1,5 +1,6 @@
 import { body, header, query, param } from 'express-validator'
 import { UserByEmail, UserExist, UsernameExist } from '../services/auth.services';
+import { getCategoryByName } from '../services/category.services';
 
 export const registerValidation = [
   body('username')
@@ -253,7 +254,11 @@ export const categoryValidation = [
     .withMessage('Category name must be a string')
     .trim()
     .isLength({ min: 1 })
-    .withMessage('Category name cannot be empty'),
+    .withMessage('Category name cannot be empty')
+    .custom(async (name)=> {
+      const category = await getCategoryByName(name)
+      if(category) throw new Error('Category already exists')
+    }),
 
   param('id')
     .optional()

@@ -21,6 +21,7 @@ export interface IProfile extends Document {
     achievements?: IAchievement[]
     imgsrc?: String
     isFeatured?: Boolean
+    balance: Number
     author?: mongoose.Schema.Types.ObjectId
 }
 const ProfileSchema = new Schema<IProfile>({
@@ -37,6 +38,10 @@ const ProfileSchema = new Schema<IProfile>({
         default: false,
         index: true 
     }, 
+    balance: {
+        type: Number,
+        default: 0, 
+    },
     author: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users'

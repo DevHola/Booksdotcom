@@ -1,13 +1,14 @@
 import { Strategy as JWTStrategy } from 'passport-jwt'
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
-import { type Request } from 'express'
-import { CheckUserExist, generateToken, registerUser, UserByEmail } from '../services/auth.services'
+import { NextFunction, Request, Response } from 'express'
+import { CheckUserExist, generateToken, limitUser, registerUser, UserByEmail } from '../services/auth.services'
 import { IUser } from '../models/User.model'
 
 export interface DecodedToken {
     id: string
+    username: string  
     email: string
-    role: string | null
+    role:  'user' | 'creator' | undefined
 }
 
 const authorizationExtractor = function (req: Request): string | null {
@@ -28,7 +29,7 @@ export default new JWTStrategy(
     algorithms: ['RS256']
   }, async (payload: DecodedToken, done): Promise<void> => {
     try {
-      const user: IUser = await UserByEmail(payload.email)
+      const user: IUser = await limitUser(payload.email)
       if (user !== null) {
         done(null, user)
       } else {
@@ -72,3 +73,21 @@ export const GGstrategy =  new GoogleStrategy({
     }
 
 }) 
+export interface IRole {
+  role: string[]
+}
+export const authorization = (roles: IRole): ((req: Request, res: Response, next: NextFunction) => void) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as DecodedToken;
+    console.log(user)
+    const userRole = user.role ? [user.role] : [];
+    
+    const hasPermission = userRole.some((role) => roles.role.includes(role));
+    
+    if (!hasPermission) {
+      return res.status(403).json({ message: 'You do not have permission to access this resource' });
+    }
+    
+    next(); 
+  };
+};
