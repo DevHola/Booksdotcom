@@ -16,7 +16,6 @@ export interface IProduct extends Document {
     numberOfReviews?: Number
     totalSold?: Number
     isDiscounted?: Boolean
-    discountinPercent?: Number
     language: String
     categoryid: ICategory
     user: String    
@@ -82,11 +81,6 @@ const ProductSchema = new Schema<IProduct>({
         type: Boolean,
         required: true,
         default: false
-    },
-    discountinPercent: {
-        type: Number,
-        required: true,
-        default: 0
     },
     language: {
         type: String,

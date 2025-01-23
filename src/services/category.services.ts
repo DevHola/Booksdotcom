@@ -2,7 +2,6 @@ import CategoryModel, { ICategory } from "../models/category.model";
 export const NewCategory = async (data: string) => {
         const category = await CategoryModel.create({name: data})
         await category.save()
-        console.group(data)
 }
 export const editCategory = async (id: string, name: string) => {
      await CategoryModel.findOneAndUpdate( { _id: id }, { $set: { name: name }}, { upsert: true })

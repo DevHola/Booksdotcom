@@ -4,6 +4,7 @@ import passport from 'passport'
 import { addAuthorAchievement, createUserProfile, editUserProfile, getAuthorProfile, removeAuthorAchievement } from '../controllers/profile.controllers'
 import { upload } from '../middlewares/cloudinary'
 import { achievementValidation, assignroleValidation, authTokenValidation, forgetValidation, initVerifyValidation, loginValidation, otpValidation, preferenceValidation, profileValidation, registerValidation, removeAchievementValidation, resetPasswordValidation, wishlistValidation } from '../middlewares/validation'
+import { authorization } from '../middlewares/passport'
 const AuthRouter = express.Router()
 /**
  * @swagger
@@ -12,7 +13,7 @@ const AuthRouter = express.Router()
  *     User:
  *       type: object
  *       properties:
- *         username:
+ *         name:
  *           type: string
  *           description: The user's name
  *         email:
@@ -50,7 +51,7 @@ const AuthRouter = express.Router()
  *           schema:
  *             type: object
  *             properties:
- *               username:
+ *               name:
  *                 type: string
  *               email:
  *                 type: string
@@ -171,7 +172,7 @@ AuthRouter.put('/reset', resetPasswordValidation, ResetPassword)
  *       401:
  *         description: Unauthorized
  */
-AuthRouter.get('/user', authTokenValidation, passport.authenticate('jwt', { session: false }), authUser)
+AuthRouter.get('/user', authTokenValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['user','creator','admin']}), authUser)
 
 /**
  * @swagger
@@ -295,9 +296,15 @@ AuthRouter.get('/google/callback', passport.authenticate( 'google', {
      session: false,
      failureRedirect: '/callback/failure'
   }), (req, res) => {
-    res.json({
-        accesstoken: req.user
-    })
+    const {token, action} = req.user as {token: string, action: string}
+    if (action === 'login'){  
+     return res.redirect(`http://yourfrontend.com/login-success?token=${token}`);
+    } else if (action === 'register'){
+      return res.redirect(`http://yourfrontend.com/register-success?token=${token}`);
+    }
+    // res.json({
+    //     accesstoken: req.user
+    // })
   });
 AuthRouter.get('/callback/failure' , (req , res) => {
     res.status(401).json({
@@ -337,7 +344,7 @@ AuthRouter.get('/callback/failure' , (req , res) => {
  *         description: Unauthorized
 
  */
-AuthRouter.post('/user/wishlist', wishlistValidation, passport.authenticate('jwt', { session: false }), addToWish)
+AuthRouter.post('/user/wishlist', wishlistValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), addToWish)
 
 /**
  * @swagger
@@ -371,7 +378,7 @@ AuthRouter.post('/user/wishlist', wishlistValidation, passport.authenticate('jwt
  *       401:
  *         description: Unauthorized
  */
-AuthRouter.patch('/user/wishlist', wishlistValidation, passport.authenticate('jwt', { session: false }), removewishlist)
+AuthRouter.patch('/user/wishlist', wishlistValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), removewishlist)
 /**
  * @swagger
  * /auth/user/wishlist:
@@ -393,7 +400,7 @@ AuthRouter.patch('/user/wishlist', wishlistValidation, passport.authenticate('jw
  *       401:
  *         description: Unauthorized
  */
-AuthRouter.get('/user/wishlist', authTokenValidation, passport.authenticate('jwt', { session: false }), userwishlist)
+AuthRouter.get('/user/wishlist', authTokenValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), userwishlist)
 /**
  * @swagger
  * /auth/user/preference:
@@ -426,7 +433,7 @@ AuthRouter.get('/user/wishlist', authTokenValidation, passport.authenticate('jwt
  *       401:
  *         description: Unauthorized
  */
-AuthRouter.post('/user/preference', preferenceValidation, passport.authenticate('jwt', { session: false }), addPreference)
+AuthRouter.post('/user/preference', preferenceValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), addPreference)
 /**
  * @swagger
  * /auth/user/preference:
@@ -461,7 +468,7 @@ AuthRouter.post('/user/preference', preferenceValidation, passport.authenticate(
  *       401:
  *         description: Unauthorized
  */
-AuthRouter.patch('/user/preference', preferenceValidation, passport.authenticate('jwt', { session: false }), removePreference)
+AuthRouter.patch('/user/preference', preferenceValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), removePreference)
 /**
  * @swagger
  * /auth/user/preference:
@@ -483,7 +490,7 @@ AuthRouter.patch('/user/preference', preferenceValidation, passport.authenticate
  *       401:
  *         description: Unauthorized
  */
-AuthRouter.get('/user/preference', authTokenValidation, passport.authenticate('jwt', { session: false }), userPreference)
+AuthRouter.get('/user/preference', authTokenValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), userPreference)
 /**
  * @swagger
  * /auth/featured/authors:
@@ -529,7 +536,7 @@ AuthRouter.get('/featured/authors', featuredAuthors)
  *       401:
  *         description: Unauthorized
  */
-AuthRouter.post('/author/profile', profileValidation, passport.authenticate('jwt', { session: false }), upload.array('img',1), createUserProfile)
+AuthRouter.post('/author/profile', profileValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), upload.array('img',1), createUserProfile)
 /**
  * @swagger
  * /auth/author/profile:
@@ -564,7 +571,7 @@ AuthRouter.post('/author/profile', profileValidation, passport.authenticate('jwt
  *       401:
  *         description: Unauthorized
  */
-AuthRouter.patch('/author/profile/edit', passport.authenticate('jwt', { session: false }), editUserProfile)
+AuthRouter.patch('/author/profile/edit', passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), editUserProfile)
 /**
  * @swagger
  * /auth/author/profile:
@@ -609,7 +616,7 @@ AuthRouter.get('/author/profile', getAuthorProfile)
  *       401:
  *         description: Unauthorized
  */
-AuthRouter.post('/author/achievement', achievementValidation, passport.authenticate('jwt', { session: false }), addAuthorAchievement)
+AuthRouter.post('/author/achievement', achievementValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), addAuthorAchievement)
 /**
  * @swagger
  * /auth/author/achievement:
@@ -645,5 +652,5 @@ AuthRouter.post('/author/achievement', achievementValidation, passport.authentic
  *         description: Unauthorized
  */
 
-AuthRouter.patch('/author/achievement', removeAchievementValidation, passport.authenticate('jwt', { session: false }), removeAuthorAchievement)
+AuthRouter.patch('/author/achievement', removeAchievementValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), removeAuthorAchievement)
 export default AuthRouter

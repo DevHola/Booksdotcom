@@ -27,7 +27,7 @@ export const updateStockInProduct = async (data:any, productid: string, formatid
     if(!product){
         throw new Error('product not found')
     }
-    const format = await productModel.updateOne({'formats._id': formatid, 'formats.type': 'physical'}, {
+    const format = await productModel.updateOne({_id: product._id, 'formats._id': formatid, 'formats.type': 'physical'}, {
         $inc: {
             "formats.$.stock": data.stock
         }
@@ -41,7 +41,7 @@ export const updateFormatPrice = async (data:any, productid: string, formatid: s
     if(!product){
         throw new Error('product not found')
     }
-    const format = await productModel.updateOne({'formats._id': formatid}, {
+    const format = await productModel.updateOne({_id: product._id, 'formats._id': formatid}, {
         $set: {
             "formats.$.price": data.price
         }

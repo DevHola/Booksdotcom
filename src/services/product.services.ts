@@ -1,4 +1,8 @@
-import mongoose from "mongoose";
+import productModel, { IProduct } from "../models/product.model";
+import CategoryModel from "../models/category.model";
+import OrderModel from "../models/order.model";
+import SubOrderModel from "../models/suborder.model";
+
 export interface IProductFilter {
     title?: string;
     author?: string[];
@@ -11,8 +15,6 @@ export interface IProductFilter {
     minNumberOfReviews?: number;
     minTotalSold?: number;
     isDiscounted?: boolean;
-    minDiscountinPercent?: number;
-    maxDiscountinPercent?: number;
     language?: string;
     categoryid?: string;
   }
@@ -22,10 +24,15 @@ export interface IProductFilter {
     totalPage: number,
     totalProducts: number
   }
-  
-import productModel, { IProduct } from "../models/product.model";
-import CategoryModel from "../models/category.model";
-import OrderModel from "../models/order.model";
+  export interface IProductDefuse {
+    product: string,
+    quantity: number,
+    format: string,
+    price: number
+}
+export interface POA {
+    products: IProductDefuse[],
+}
 export const newProduct = async (data:any): Promise<IProduct> => {
     const product = await productModel.create({
         title: data.title,
@@ -88,7 +95,6 @@ export const getProductsByCategory = async (category: string, page: number, limi
                 numberOfReviews: 1,
                 totalSold: 1,
                 isDiscounted: 1,
-                discountinPercent: 1,
                 formats: 1,
                 user: 1,
                 category: '$category.name'
@@ -135,12 +141,6 @@ export const searchProducts = async (filter: IProductFilter, page: number, limit
     }
     if(filter.isDiscounted !== undefined){
         query.isDiscounted = filter.isDiscounted  
-    }
-    if(filter.minDiscountinPercent !== undefined){
-        query.discountinPercent = {...query.discountinPercent, $gte: filter.minDiscountinPercent  }
-    }
-    if(filter.maxDiscountinPercent !== undefined){
-        query.discountinPercent = {...query.discountinPercent, $lte: filter.maxDiscountinPercent  }
     }
     if(filter.language !== undefined){
         query.language = filter.language  
@@ -198,7 +198,6 @@ export const bestBooksFromGenre = async (category: string, page: number, limit: 
                 numberOfReviews: 1,
                 totalSold: 1,
                 isDiscounted: 1,
-                discountinPercent: 1,
                 formats: 1,
                 user: 1,
                 category: '$category.name'
@@ -219,8 +218,10 @@ export const bestSellers = async (page: number, limit: number): Promise<ISearchR
 }
 export const recentlySold = async (page: number, limit: number): Promise<ISearchResult> => {
     const getRecentOrder = await OrderModel.find().sort({ createdAt: -1 }).limit(50)
+    const getSubOrder = await SubOrderModel.find({orderid: { $in: getRecentOrder}})
+    // NEEDS REFACTORING & Testing
     let productarray: any[] = []
-    for(let product of getRecentOrder){
+    for(let product of getSubOrder){
          productarray = productarray.concat(product.products)
     }
     //remove duplicates
@@ -245,4 +246,52 @@ export const addPreviewFile = async (url: string, productid: string): Promise<IP
     }
     return addpreviewfile as IProduct
     
+}
+export const getProductAuthoor = async (productid: string): Promise<IProduct> => {
+    const user = await productModel.findById(productid, {user: 1, _id: 0})
+    if(!user){
+        throw new Error('Product not found')
+    }
+    return user as IProduct
+}
+export const groupProducts = async (products: IProductDefuse[]): Promise<any> => {
+    const grouped: { [key: string]: IProductDefuse[] } = {}
+
+    for (const product of products) {
+        const author: string = (await getProductAuthoor(product.product)).user as string
+
+        if (!grouped[author]) grouped[author] = []
+        grouped[author].push(product)
+    }
+
+    return grouped
+}
+export const updateStockOrderInitiation = async (productId: string, quantity: number ) => {
+    const value = quantity * - 1
+    await productModel.updateOne({_id: productId, 'formats.type': 'physical'}, {
+        $inc: {
+            'formats.$.stock': value
+        }
+    },{ upsert: true })
+    
+}
+export const updateDiscountStatus = async (ids: string[]) => {
+    const products = await productModel.updateMany({_id: {$in:ids}}, {
+        $set:{
+            isDiscounted: true
+        }
+    }, {upsert: true})    
+    if(!products) {
+        throw new Error('error occurred updating product discount')
+    }
+}
+export const removeDiscountStatus = async (ids: string[], status: boolean) => {
+    const products = await productModel.updateMany({_id: {$in:ids}}, {
+        $set:{
+            isDiscounted: status
+        }
+    }, {upsert: true})    
+    if(!products) {
+        throw new Error('error occurred updating product discount')
+    }
 }
