@@ -1,7 +1,7 @@
 import mongoose, {Document, Model, Schema, model} from "mongoose";
 import bcrypt from 'bcrypt'
 export interface IUser extends Document{
-    username: string
+    name: string
     email: string
     role?: string
     isverified?: boolean
@@ -12,13 +12,12 @@ export interface IUser extends Document{
     wishlist: string[]
     preferences: string[]
     profile: String
+    lastLogin?: Date
 }
 const Userschema = new Schema<IUser>({
-    username: {
+    name: {
         type: String,
         required: true,
-        index: true,
-        unique: true,
         lowercase: true
     },
     email: {
@@ -35,7 +34,6 @@ const Userschema = new Schema<IUser>({
     isverified: {
         type: Boolean,
         required: true,
-        index: true,
         default: false
     },
     password: {
@@ -64,6 +62,10 @@ const Userschema = new Schema<IUser>({
     profile: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'profiles'
+    }, 
+    lastLogin: {
+        type: Date,
+        default: Date.now()
     }
 
 }, {timestamps: true})

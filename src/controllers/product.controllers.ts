@@ -4,7 +4,6 @@ import { addPreviewFile, bestBooksFromGenre, bestSellers, getAllProduct, getProd
 import { DecodedToken } from "../middlewares/passport";
 import { addFormatToProduct, removeFormatFromProduct, updateFormatPrice, updateStockInProduct } from "../services/format.services";
 import { cloudinaryImageUploadMethod } from "../middlewares/cloudinary";
-// add book preview upload
 export const createProduct = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const errors = validationResult(req)
     if(!errors.isEmpty()){
@@ -215,8 +214,6 @@ export const search = async (req: Request, res: Response, next: NextFunction): P
             minNumberOfReviews: req.query.minNumberOfReviews,
             minTotalSold: req.query.minTotalSold,
             isDiscounted: req.query.isDiscounted,
-            minDiscountinPercent: req.query.minDiscountinPercent,
-            maxDiscountinPercent: req.query.maxDiscountinPercent,
             language: req.query.language,
             category: req.query.category,
 

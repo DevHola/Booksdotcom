@@ -1,14 +1,14 @@
 import { Strategy as JWTStrategy } from 'passport-jwt'
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 import { NextFunction, Request, Response } from 'express'
-import { CheckUserExist, generateToken, limitUser, registerUser, UserByEmail } from '../services/auth.services'
+import { CheckUserExist, generateToken, limitUser, registerUser } from '../services/auth.services'
 import { IUser } from '../models/User.model'
 
 export interface DecodedToken {
     id: string
-    username: string  
+    name: string  
     email: string
-    role:  'user' | 'creator' | undefined
+    role:  'user' | 'creator' | 'admin'| undefined
 }
 
 const authorizationExtractor = function (req: Request): string | null {
@@ -60,16 +60,16 @@ export const GGstrategy =  new GoogleStrategy({
   const data = {
     provider: profile.provider,
     provider_id: profile.id,
-    username: profile.displayName,
+    name: profile.displayName,
     email: profile.emails[0].value,
     }
     const user = await CheckUserExist(data.provider_id)
     if(user){
       const token = await generateToken(user as IUser, 'login')
-      return done(null, {token: token});
+      return done(null, {token: token, action: 'login'});
     } else{
      const token = await registerUser(data as IUser, 'verification')
-      return done(null, {token: token});
+      return done(null, {token: token, action: 'register'});
     }
 
 }) 
@@ -79,7 +79,6 @@ export interface IRole {
 export const authorization = (roles: IRole): ((req: Request, res: Response, next: NextFunction) => void) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as DecodedToken;
-    console.log(user)
     const userRole = user.role ? [user.role] : [];
     
     const hasPermission = userRole.some((role) => roles.role.includes(role));

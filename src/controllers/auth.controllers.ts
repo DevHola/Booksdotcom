@@ -1,6 +1,6 @@
 import { type Request, type Response, type NextFunction } from 'express'
 import { type IUser } from '../models/User.model'
-import { activate, addToPreference, addToWishlist, assignUserRole, changePassword, checkOTP, extractor, generateToken, getFeaturedAuthors, getUserById, getUserPreference, getUserWishlist, otpgen, registerUser, Regverificationmail, removeFromPreference, removeFromWishlist, Resetpasswordmail, UserByEmail, UserExist, UsernameExist, ValidateUserPassword, verificationmail, verifyResetToken, verifyVerificationToken } from '../services/auth.services'
+import { activate, addToPreference, addToWishlist, assignUserRole, changePassword, checkOTP, extractor, generateToken, getFeaturedAuthors, getUserById, getUserPreference, getUserWishlist, otpgen, registerUser, Regverificationmail, removeFromPreference, removeFromWishlist, Resetpasswordmail, UserByEmail, UserExist, ValidateUserPassword, verificationmail, verifyResetToken, verifyVerificationToken } from '../services/auth.services'
 import { validationResult } from 'express-validator'
 import { DecodedToken } from '../middlewares/passport'
 import { reusableMail } from '../configs/delivermail'
@@ -12,9 +12,9 @@ export const register = async (req: Request, res: Response, next: NextFunction):
       })
   }
   try {
-    const { username, email, password } = req.body
+    const { name, email, password } = req.body
     const data = {
-      username,
+      name,
       email,
       password
     }
@@ -33,7 +33,7 @@ export const register = async (req: Request, res: Response, next: NextFunction):
         return res.status(400).json({
           message: 'User already exist'
         })
-      } else if (error.message === 'Username already inuse'){
+      } else if (error.message === 'name already inuse'){
 
       } else {
         next(error)
@@ -88,7 +88,6 @@ export const forgetPassword = async (req: Request, res: Response, next: NextFunc
     const { email } = req.body
     const user = await UserByEmail(email as string)
       const token = await generateToken(user, 'reset')
-      console.log(token)
     if(token){
       const data = await Resetpasswordmail(token, email)
       await reusableMail(data)
@@ -103,6 +102,10 @@ export const forgetPassword = async (req: Request, res: Response, next: NextFunc
       if (error.message === 'Account not found') {
         return res.status(404).json({
           message: 'account not found'
+        })
+      } else if (error.message === 'jwt expired'){
+        return res.status(401).json({
+          message: 'Token expired'
         })
       } else {
         next(error)
@@ -133,6 +136,10 @@ export const ResetPassword = async (req: Request, res: Response, next: NextFunct
       if (error.message === 'authentication failed') {
         return res.status(401).json({
           message: 'Unauthorized'
+        })
+      } else if (error.message === 'jwt expired'){
+        return res.status(401).json({
+          message: 'Token expired'
         })
       } else {
         next(error)
@@ -184,7 +191,15 @@ export const initActivation = async (req: Request, res: Response, next: NextFunc
       })
     }
   } catch (error) {
-    next(error)
+    if(error instanceof Error){
+      if (error.message === 'jwt expired'){
+        return res.status(401).json({
+          message: 'Token expired'
+        })
+      } else {
+        next(error)
+      }
+    }
   }
 }
 
@@ -217,6 +232,10 @@ export const activateAccount = async (req: Request, res: Response, next: NextFun
       if(error.message === 'authentication failed'){
         return res.status(401).json({
           message: 'Authentication failed'
+        })
+      }  else if (error.message === 'jwt expired'){
+        return res.status(401).json({
+          message: 'Token expired'
         })
       } else if (error.message === 'Incorrect OTP'){
         return res.status(401).json({
@@ -255,6 +274,10 @@ export const assignRole = async (req: Request, res: Response, next: NextFunction
       if(error.message === 'authentication failed'){
         return res.status(401).json({
           message: 'Authentication failed'
+        })
+      }  else if (error.message === 'jwt expired'){
+        return res.status(401).json({
+          message: 'Token expired'
         })
       } else {
         next(error)

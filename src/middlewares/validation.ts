@@ -1,22 +1,21 @@
 import { body, header, query, param } from 'express-validator'
-import { UserByEmail, UserExist, UsernameExist } from '../services/auth.services';
+import { UserByEmail, UserExist, nameExist } from '../services/auth.services';
 import { getCategoryByName } from '../services/category.services';
 
 export const registerValidation = [
-  body('username')
+  body('name')
     .exists({ checkFalsy: true })
-    .withMessage('username is required')
+    .withMessage('name is required')
     .isString()
-    .withMessage('username should be a string')
-    .trim()
-    .custom(async (username) => {
-      const user = await UsernameExist(username)
+    .withMessage('name should be a string')
+    .custom(async (name) => {
+      const user = await nameExist(name)
       if(user){
-        throw new Error('Username already in use')
+        throw new Error('name already in use')
       }
     })
     .isLength({ min: 3 })
-    .withMessage('username must be at least 3 characters long'),
+    .withMessage('name must be at least 3 characters long'),
   body('email')
     .exists({ checkFalsy: true })
     .withMessage('email is required')

@@ -16,7 +16,6 @@ import swaggerUi from 'swagger-ui-express'
 import swaggerJsdoc from 'swagger-jsdoc'
 import { seedcategory, seedproducts } from './models/seeders/seed'
 import { options } from './configs/docs'
-import { genTrackingCode } from './services/order.services'
 const app: Application = express()
 app.use(cors({
   origin: "*"
@@ -59,7 +58,6 @@ const startApp = async (PORT: any) => {
   void connection(uri)
   // await seedcategory()
   // await seedproducts()
-  genTrackingCode('Olamide')
   app.listen(PORT, () => {
     console.log(`Express is listening at http://localhost:${PORT}`)
   })

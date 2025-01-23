@@ -11,7 +11,7 @@ export const createUserOrder = async (req: Request, res: Response, next: NextFun
     try {
         const user = req.user as DecodedToken
         const id = user.id
-        const trackingCode = await genTrackingCode(user.username)
+        const trackingCode = await genTrackingCode(user.name)
         const products = req.body.products as IProductDefuse[]
         const status = req.body.status
         const paymentHandler = req.body.paymentHandler

@@ -38,8 +38,9 @@ export const createSubOrder = async (data:any): Promise<ISubOrder> => {
     return subOrder as ISubOrder
 }
 export const getAuthUserOrder = async (userid: string, page: number, limit: number): Promise<IOrderSearchResult> => {
-    const orders = await OrderModel.find({user: userid}).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit)
-    const ordercount = await OrderModel.find({user: userid}).countDocuments()
+    const [orders, ordercount] = await Promise.all([await OrderModel.find({user: userid}).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit), 
+        await OrderModel.find({user: userid}).countDocuments()
+    ])
     return { orders, currentPage: page, totalPage: Math.ceil(ordercount / limit), totalOrders:ordercount } as IOrderSearchResult
 }
 export const getSingleOrderData = async (id: string): Promise<ISubOrder[]> => {
@@ -49,20 +50,18 @@ export const getSingleOrderData = async (id: string): Promise<ISubOrder[]> => {
     }).exec() as ISubOrder[]  
 }
 export const getCreatorOrders = async (userid: string, page: number, limit: number): Promise<IOrderSearchResult> => {
-    const orders = await OrderModel.find({creators: {
+    const [orders, ordersCount] = await Promise.all([await OrderModel.find({creators: {
         $in: userid
-    }}).sort({ createdAt: -1}).skip((page - 1) * limit).limit(limit).exec()
-    const ordersCount = await OrderModel.find({creators: {
+    }}).sort({ createdAt: -1}).skip((page - 1) * limit).limit(limit).exec(), await OrderModel.find({creators: {
         $in: userid
-    }}).countDocuments()
+    }}).countDocuments()])
     return { orders, currentPage: page, totalPage: Math.ceil(ordersCount / limit), totalOrders: ordersCount } as IOrderSearchResult
 }
 export const getCreatorSingleOrder = async (userid:string, orderid: string): Promise<ISubOrder[]> => {
-    const suborder = await SubOrderModel.find({orderid: orderid, author: userid}).populate({
+    return await SubOrderModel.find({orderid: orderid, author: userid}).populate({
         path: 'products.product',
         select:'title coverImage'
     })
-    return suborder
 }
 export const webHook = async (data: any) => {
     const orderinformation = data.metadata
@@ -78,9 +77,9 @@ export const webHook = async (data: any) => {
     }
     return order
 }
-export const genTrackingCode = async (username: string): Promise<string> => { 
+export const genTrackingCode = async (name: string): Promise<string> => { 
     const date = Date.now()
-    return date + '-' + username
+    return date + '-' + name
 }
 export const addOrderCreators = async (orderid: string, creatorid: string) => {
     await OrderModel.updateOne({_id: orderid}, {

@@ -12,17 +12,18 @@ export interface ISearchResult{
 export const registerUser = async (data: IUser, type: string): Promise<string> => {
     if(type === 'local'){
         const user = await UserModel.create({
-            username: data.username,
+            name: data.name,
             email: data.email,
             password: data.password
         })
         await user.save()
     } else {
         const user = await UserModel.create({
-            username: data.username,
+            name: data.name,
             email: data.email,
             provider: data.provider,
-            provider_id: data.provider_id
+            provider_id: data.provider_id,
+            isverified: true
         })
         await user.save()
     }
@@ -34,7 +35,7 @@ export const registerUser = async (data: IUser, type: string): Promise<string> =
     }
 }
 export const limitUser = async (email: string): Promise<IUser> => {
-    return await UserModel.findOne({email: email},{email: 1, _id: 1, role: 1, username: 1, isverified: 1}) as IUser
+    return await UserModel.findOne({email: email},{email: 1, _id: 1, role: 1, name: 1, isverified: 1}) as IUser
 }
 export const UserByEmail = async (email:string): Promise<IUser> => {
     const user = await UserModel.findOne({email: email})
@@ -47,8 +48,8 @@ export const UserExist = async (email:string): Promise<IUser> => {
     const user = await UserModel.findOne({email: email})
     return user as IUser
 }
-export const UsernameExist = async (username:string): Promise<IUser> => {
-    const user = await UserModel.findOne({username: username})
+export const nameExist = async (name:string): Promise<IUser> => {
+    const user = await UserModel.findOne({name: name})
     return user as IUser
 } 
 
@@ -71,7 +72,8 @@ export const ValidateUserPassword = async (email: string, password:string): Prom
         throw new Error('authentication failed');
     }
     const data = { _id:user._id, email, role: user.role } as IUser
-    const token = await generateToken(data, 'login')   
+    const token = await generateToken(data, 'login')  
+    await UserModel.findByIdAndUpdate(user._id, { $set: { lastLogin: Date.now() }}) 
     if (token) {
         return token;
     } else {
@@ -79,7 +81,7 @@ export const ValidateUserPassword = async (email: string, password:string): Prom
     }
 }
 export const getUserById = async (id: string): Promise<IUser> => {
-    const user = await UserModel.findOne({ _id: id }, { _id: 1, username: 1, email: 1, role: 1, isverified: 1 })
+    const user = await UserModel.findOne({ _id: id }, { _id: 1, name: 1, email: 1, role: 1, isverified: 1 })
     return user as IUser 
 }
 export const generateToken = async (data:IUser, type: string): Promise<string | null> => {
@@ -215,7 +217,7 @@ export const getFeaturedAuthors = async (page: number, limit: number): Promise<I
             },
             {
                 $project: {
-                    username: 1,
+                    name: 1,
                     email: 1,
                     img:'$profile.imgsrc',
     
@@ -257,7 +259,7 @@ const storeOTP = async (otpdata: string, id: string) => {
     await UserModel.findByIdAndUpdate(id, {otp: otpdata})
 }
 export const Resetpasswordmail = async (resettoken: string, email: string): Promise<mail> => {
-    const url = `${process.env.FRONTEND_URL}/auth/token=${resettoken}`
+    const url = `${process.env.FRONTEND_URL}/newpassword/?token=${resettoken}`
     const content = `<!DOCTYPE html>
           <html lang="en">
           <head>
