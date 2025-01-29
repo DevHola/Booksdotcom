@@ -1,3 +1,4 @@
+import mongoose, { ClientSession } from "mongoose"
 import OrderModel, { IOrder } from "../models/order.model"
 import SubOrderModel, { IOrderProduct, ISubOrder } from "../models/suborder.model"
 import { creditAuthorAccount } from "./auth.services"
@@ -14,28 +15,18 @@ export interface IOrderSearchResult {
     totalPage: number,
     totalOrders: number
 }
-export const createOrder = async (data:IOrder): Promise<IOrder> => {
-     const order = await OrderModel.create({
-        trackingCode: data.trackingCode,
-        user: data.user,
-        status: data.status,
-        total: data.total,
-        paymentHandler: data.paymentHandler,
-        ref: data.ref
-     })
-     await order.save()
-     return order as IOrder
+export const createOrder = async (data:IOrder, session: ClientSession): Promise<IOrder> => {
+     const order = await OrderModel.create([data], {session})
+     return order[0] as IOrder
 }
-export const createSubOrder = async (data:any): Promise<ISubOrder> => {
-    const subOrder = await SubOrderModel.create({
-       orderid: data.orderid,
-       author: data.author,
-       products: data.products,
-       total: data.total,
-       status: data.status
-    })
-    await subOrder.save()
-    return subOrder as ISubOrder
+export const newSubOrder = async (data:ISubOrder, session: ClientSession): Promise<ISubOrder> => {
+    console.log(data)
+    const subOrder = await SubOrderModel.create([data], {session})
+    if(!subOrder){
+        throw new Error('Error creating suborder')
+    }
+    console.log(subOrder)
+    return subOrder[0] as ISubOrder
 }
 export const getAuthUserOrder = async (userid: string, page: number, limit: number): Promise<IOrderSearchResult> => {
     const [orders, ordercount] = await Promise.all([await OrderModel.find({user: userid}).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit), 
@@ -55,7 +46,7 @@ export const getCreatorOrders = async (userid: string, page: number, limit: numb
     }}).sort({ createdAt: -1}).skip((page - 1) * limit).limit(limit).exec(), await OrderModel.find({creators: {
         $in: userid
     }}).countDocuments()])
-    return { orders, currentPage: page, totalPage: Math.ceil(ordersCount / limit), totalOrders: ordersCount } as IOrderSearchResult
+    return { orders: orders, currentPage: page, totalPage: Math.ceil(ordersCount / limit), totalOrders: ordersCount } as IOrderSearchResult
 }
 export const getCreatorSingleOrder = async (userid:string, orderid: string): Promise<ISubOrder[]> => {
     return await SubOrderModel.find({orderid: orderid, author: userid}).populate({
@@ -71,39 +62,56 @@ export const webHook = async (data: any) => {
         throw new Error('tracking code exist')
     }
     // need to review this
-    const order = await createOrder(data)
-    if(!order){
-        throw new Error('Error creating order')
-    }
-    return order
+    //const order = await createOrder(data)
+    // if(!order){
+    //     throw new Error('Error creating order')
+    // }
+    // return order
 }
 export const genTrackingCode = async (name: string): Promise<string> => { 
     const date = Date.now()
     return date + '-' + name
 }
-export const addOrderCreators = async (orderid: string, creatorid: string) => {
-    await OrderModel.updateOne({_id: orderid}, {
+export const addOrderCreators = async (orderid: string, creatorid: string, session: ClientSession) => {
+    const order = await OrderModel.updateOne({_id: orderid}, {
         $push: {
             creators: creatorid
         }
-    })    
-}
-export const vBS = async (groupProductslist: any, orderid: string) => {
-    for (const [author, products] of Object.entries(groupProductslist)) {
-        const total = (products as IProductDefuse[]).reduce((sum, product) => sum + product.price, 0) 
-        const data = {
-            orderid: orderid as string,
-            author: author as string,
-            products: products as IOrderProduct[],
-            total: total as number,
-            status: 'pending' as string,
-        }
-        await createSubOrder(data)
-        await addOrderCreators(data.orderid, data.author)
-        await creditAuthorAccount(author as string, total as number);
-        const product = (products as IOrderProduct[]).filter((product) => product.format === 'physical')   
-        for (const item of product){
-            await updateStockOrderInitiation(item.product as any, item.quantity as number)
-        }
+    }).session(session)
+    if(!order){
+        throw new Error('Error adding creators')
     }
+}
+export const vBS = async (groupProductslist: any, data: IOrder): Promise<IOrder> => {
+    const session = await mongoose.startSession()
+    return session.withTransaction(async () => {
+        try {
+            const order = await createOrder(data as IOrder, session)
+            const orderid = order._id as string
+            for (const [author, products] of Object.entries(groupProductslist)) {
+                const total = (products as IProductDefuse[]).reduce((sum, product) => sum + product.price, 0) 
+                const subdata = {
+                    orderid: orderid.toString() as string,
+                    author: author as string,
+                    products: products as IOrderProduct[],
+                    total: total as number,
+                    status: 'pending' as string,
+                }
+                await newSubOrder(subdata as any, session)
+                await addOrderCreators(subdata.orderid, subdata.author, session)
+                await creditAuthorAccount(author as string, total as number, session);
+                const product = (products as IOrderProduct[]).filter((product) => product.format === 'physical')   
+                for (const item of product){
+                    await updateStockOrderInitiation(item.product as any, item.quantity as number, session)
+                }
+            }
+            return order as IOrder
+        } catch (error) {
+            console.log(error)
+            throw new Error('Error in creating order')   
+        }
+    }).finally(() => {
+        session.endSession()
+    })
+    
 }

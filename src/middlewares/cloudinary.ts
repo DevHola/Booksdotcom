@@ -3,6 +3,9 @@ import {v2 as cloudinary} from 'cloudinary'
 import fs from 'fs'
 const multerStorage = multer.diskStorage({
   destination: (req, file, cb) => {
+    if(!fs.existsSync('./uploads')) {
+      fs.mkdirSync('./uploads')
+    }
       cb(null, './uploads/')
   },
   filename: (req, file, cb) => {
