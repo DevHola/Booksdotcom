@@ -5,10 +5,6 @@ export const createProfile = async (data: IProfile): Promise<IProfile> => {
     if (!user) {
         throw new Error('User not found');
     }
-    // if(user.role !== 'creator'){
-    //     throw new Error('Only users with the usertype "creator" can have a profile');
-    // } // THIS: IS PART OF AUTHORIZATION MIDDLEWARE
-
     const profile = await ProfileModel.create({
         biography: data.biography,
         imgsrc: data.imgsrc,
@@ -33,7 +29,7 @@ export const editProfile = async (data: IProfile, userId: String ): Promise<IPro
     return profile as IProfile
 }
 export const getProfile = async (id: string): Promise<IProfile> => {
-    return await ProfileModel.findOne({ author: id }) as IProfile
+    return await ProfileModel.findOne({ author: id }, {balance:0}) as IProfile
 }
 export const addAchievement = async (data: any, userid: string): Promise<IProfile> => {
     const user = await UserModel.findById(userid)

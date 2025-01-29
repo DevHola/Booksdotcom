@@ -2,6 +2,7 @@ import productModel, { IProduct } from "../models/product.model";
 import CategoryModel from "../models/category.model";
 import OrderModel from "../models/order.model";
 import SubOrderModel from "../models/suborder.model";
+import { ClientSession } from "mongoose";
 
 export interface IProductFilter {
     title?: string;
@@ -266,32 +267,29 @@ export const groupProducts = async (products: IProductDefuse[]): Promise<any> =>
 
     return grouped
 }
-export const updateStockOrderInitiation = async (productId: string, quantity: number ) => {
+export const updateStockOrderInitiation = async (productId: string, quantity: number, session: ClientSession ) => {
     const value = quantity * - 1
     await productModel.updateOne({_id: productId, 'formats.type': 'physical'}, {
         $inc: {
             'formats.$.stock': value
         }
-    },{ upsert: true })
+    },{ upsert: true }).session(session)
     
 }
-export const updateDiscountStatus = async (ids: string[]) => {
+export const updateDiscountStatus = async (ids: string[], session: ClientSession) => {
     const products = await productModel.updateMany({_id: {$in:ids}}, {
         $set:{
             isDiscounted: true
         }
-    }, {upsert: true})    
+    }, {upsert: true}).session(session)    
     if(!products) {
         throw new Error('error occurred updating product discount')
     }
 }
-export const removeDiscountStatus = async (ids: string[], status: boolean) => {
+export const removeDiscountStatus = async (ids: string[], status: boolean, session: ClientSession) => {
     const products = await productModel.updateMany({_id: {$in:ids}}, {
         $set:{
             isDiscounted: status
         }
-    }, {upsert: true})    
-    if(!products) {
-        throw new Error('error occurred updating product discount')
-    }
+    }, {upsert: true}).session(session)   
 }

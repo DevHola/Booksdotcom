@@ -26,8 +26,8 @@ const OrderProduct = new Schema<IOrderProduct>({
       }
 })
 export interface ISubOrder extends Document { 
-    orderid: String
-    author: String
+    orderid: mongoose.Types.ObjectId
+    author: mongoose.Types.ObjectId
     products: IOrderProduct[]
     total: Number
     status: String

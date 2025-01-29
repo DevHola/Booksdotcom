@@ -8,12 +8,6 @@ export const registerValidation = [
     .withMessage('name is required')
     .isString()
     .withMessage('name should be a string')
-    .custom(async (name) => {
-      const user = await nameExist(name)
-      if(user){
-        throw new Error('name already in use')
-      }
-    })
     .isLength({ min: 3 })
     .withMessage('name must be at least 3 characters long'),
   body('email')

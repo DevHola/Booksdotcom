@@ -46,7 +46,6 @@ export const editUserProfile = async (req: Request, res: Response, next: NextFun
         const user = req.user as DecodedToken
         const id = user.id
         const biography = req.body.biography
-        console.log(biography)
         const data: any = {
             biography: biography as string,
         }
@@ -54,7 +53,6 @@ export const editUserProfile = async (req: Request, res: Response, next: NextFun
             const urls = await cloudinaryImageUploadMethod(req.files, process.env.PRODUCTPROFILEFOLDER as string)
             data.imgsrc = urls[0]
         }
-        console.log(data)
         const profile = await editProfile(data, id)
         if(profile){
             return res.status(200).json({

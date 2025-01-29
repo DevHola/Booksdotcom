@@ -27,15 +27,22 @@ export const createUserOrder = async (req: Request, res: Response, next: NextFun
         }
         // CREATE ORDER
         // GROUP PRODUCTS BY USER - returns an object with key as user id and value as array of products
-        const [order, groupProductslist] = await Promise.all([await createOrder(data as IOrder), await groupProducts(products)])
-        const orderid = order._id
-        const distribute = await vBS(groupProductslist, orderid as string)        
+        const [groupProductslist] = await Promise.all([await groupProducts(products)])
+        const distribute = await vBS(groupProductslist, data as IOrder)        
         return res.status(200).json({
             status: true,
-            order
+            distribute
         })
     } catch (error) {
-        next(error)
+        if(error instanceof Error){
+            if(error.message === 'Error in creating order'){
+                return res.status(400).json({
+                    message: 'Error in creating order'
+                })
+            } else {
+                next(error)
+            }
+        }
     }
     
 }
@@ -92,7 +99,7 @@ export const allCreatorOrder = async (req: Request, res: Response, next: NextFun
         const limit = parseInt(req.query.limit as string) || 10
         const user = req.user as DecodedToken
         const id = user.id
-        const orders = getCreatorOrders(id, page, limit)
+        const orders = await getCreatorOrders(id, page, limit)
         return res.status(200).json({
             status: true,
             orders
@@ -106,6 +113,7 @@ export const allCreatorOrderSuborder = async (req: Request, res: Response, next:
         const orderid = req.query.orderid as string
         const user = req.user as DecodedToken
         const id = user.id
+        console.log(user)
         const suborders = await getCreatorSingleOrder(id, orderid)
         return res.status(200).json({
             status: true,

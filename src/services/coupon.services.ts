@@ -1,8 +1,9 @@
-import mongoose from "mongoose"
+import mongoose, { ClientSession } from "mongoose"
 import CouponModel, { ICoupon } from "../models/coupon.model"
 import ruleModel, { IRules } from "../models/couponrule.model"
 import { removeDiscountStatus, updateDiscountStatus } from "./product.services"
 import moment from "moment"
+import cron from "node-cron"
 interface ICouponResult{
     coupons: []
     currentPage: number
@@ -11,42 +12,38 @@ interface ICouponResult{
 }
 export const couponCreation = async (data: ICoupon) => {
     const session = await mongoose.startSession()
-    session.startTransaction()
-    try {
-        const coupon = await CouponModel.create({
-            code: data.code,
-            type: data.type,
-            expiresAt: data.expiresAt,
-            isActive: true,
-            discount: data.discount,
-            ruleType: data.ruleType,
-            product: data.product
-        }) 
-        await coupon.save()
-        await updateDiscountStatus(data.product as string[])
-        if(data.ruleType !== 'none' && data.rules && coupon) {
-                const refined = await structureSubOrder(data.rules, data.ruleType, coupon._id as string)
-                const rules = await ruleModel.create(refined)
-                await rules.save()
-                await addRules(rules._id as string, coupon._id as string)
-        } 
-        await session.commitTransaction()
-        session.endSession()
-        return coupon
-    } catch (error) {
-        await session.abortTransaction();
-        session.endSession();
-        throw new Error('Error creating coupon')
-    }
-    
+    return session.withTransaction(async () => {
+        try {
+            const coupon = await newCoupon(data, session)   
+            await updateDiscountStatus(data.product as string[], session)
+            if(data.ruleType !== 'none' && data.rules && coupon) {
+                    const refined = await structureSubOrder(data.rules, data.ruleType, coupon._id as string)
+                    const rules = await newRules(refined, session)
+                    await addRulesToCoupon(rules._id as string, coupon._id as string, session)
+            } 
+            return coupon
+        } catch (error) {
+            throw new Error('Error creating coupon')
+        }
+    }).finally(() => session.endSession())    
 }
 
-const addRules = async (id: string, couponid: string) => {
+const newCoupon = async (data: ICoupon, session: ClientSession): Promise<ICoupon> => {
+    const coupon = await CouponModel.create([data], {session})
+    return coupon[0] as ICoupon
+}
+
+const newRules = async (data: IRules, session: ClientSession): Promise<IRules> => {
+    const rules = await ruleModel.create([data], {session})
+    return rules[0] as IRules
+}
+
+const addRulesToCoupon = async (id: string, couponid: string, session: ClientSession) => {
     const coupon = await CouponModel.updateOne({_id: couponid}, {
         $set: {
             rules: id
         }
-    })
+    }).session(session)
 }
 export const data = {
     limit: 2000,
@@ -128,21 +125,69 @@ export const validityCheck = async (coupon: ICoupon, date: any): Promise<{isVali
 }
 export const deleteCoupon = async (couponCode: string): Promise<void> => {
     const session = await mongoose.startSession()
-    await session.startTransaction()
-
-    try {
-        await CouponModel.updateOne({code: couponCode}, {
-            $set: {
-                isDeleted: true
-            }
-        })
-        const coupondata = await CouponModel.findOne({code: couponCode}) as ICoupon   
-        await removeDiscountStatus(coupondata.product as string[], false as boolean)
-        await session.commitTransaction()
-        session.endSession()
-    } catch (error) {
-        await session.abortTransaction();
-        session.endSession();
-        throw new Error('error deleting coupon')
-    }
+    return session.withTransaction(async () => {
+        try {
+            await CouponModel.updateOne({code: couponCode}, {
+                $set: {
+                    isDeleted: true
+                }
+            }).session(session)
+            const coupondata = await CouponModel.findOne({code: couponCode}).session(session) as ICoupon   
+            await removeDiscountStatus(coupondata.product as string[], false as boolean, session)
+        } catch (error) {
+            throw new Error('error deleting coupon')
+        }
+    })
+    .finally(()=> session.endSession())
 }
+export const expiredCouponDeletion = async (data:any): Promise<void> => {
+ const session = await mongoose.startSession()
+ return session.withTransaction(async () => {
+    try {
+        const today = moment()
+        const coupons = await CouponModel.find({$expr :{
+           $or: [
+               {$lt: ["$expiresAt", today]},
+               {$eq: ["$usageCount", "$rules.limit"]}
+           ]
+        }, isActive: true}).populate('rules').lean().session(session)
+        const couponids = await formatCouponIds(coupons)
+        
+        const couponProducts = await formatCouponProducts(coupons)
+       
+        await Promise.all([await CouponModel.updateMany({_id: {$in: couponids}}, {
+           $set: {
+               isActive: false
+           }
+        }).session(session), await removeDiscountStatus(couponProducts, false, session)])
+       
+    } catch (error) {
+        console.log(error)
+        throw new Error('error deleting expired coupons')        
+    }
+
+ }).finally(() => session.endSession())
+}
+const formatCouponProducts = async (coupons:ICoupon[]): Promise<string[]> => {
+    let ids: any[] = []   
+    for (const coupon of coupons) {
+            ids.concat(coupon.product)       
+    }
+    return [...new Set(ids)]
+}
+const formatCouponIds = async (coupons:ICoupon[]): Promise<string[]> => {
+    let ids: string[] = []   
+    for (const coupon of coupons) {
+        ids.push(coupon._id as string)
+    }
+    return [...new Set(ids)]
+}
+const couponCount = async (): Promise<number> => {
+    const count = await CouponModel.countDocuments()
+    return count
+}
+
+cron.schedule('0 0 * * *', async () => {    
+    const count = await couponCount()
+    if(count > 0) await expiredCouponDeletion(data)
+})

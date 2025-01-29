@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { mail } from "../configs/delivermail"
 import ProfileModel from "../models/profile.model"
+import { ClientSession } from "mongoose"
 export interface ISearchResult{
     authors: any ,
     currentPage: number,
@@ -193,7 +194,10 @@ export const removeFromPreference = async (userid: string, category: string[]): 
 export const getUserPreference = async (userid: string): Promise<IUser> => {
     return await UserModel.findOne({_id: userid}, {
         preferences: 1
-    }).populate("preferences").exec() as IUser
+    }).populate({
+        path: 'preferences',
+        select: ['_id', 'name']
+    }).exec() as IUser
 }
 export const getFeaturedAuthors = async (page: number, limit: number): Promise<ISearchResult> => {
     const [authors, totalauthors] = await Promise.all([
@@ -229,13 +233,13 @@ export const getFeaturedAuthors = async (page: number, limit: number): Promise<I
      
     return { authors, currentPage: page, totalPage: Math.ceil(totalauthors/limit), totalauthors }
 }
-export const creditAuthorAccount = async (author: string, total: number): Promise<void> => {
+export const creditAuthorAccount = async (author: string, total: number, session: ClientSession): Promise<void> => {
     const user = await UserModel.findById(author)
     await ProfileModel.findByIdAndUpdate(user?.profile, {
         $inc: {
             balance: total
         }
-    }, { new: true })
+    }, { new: true }).session(session)
 }
 export const extractor = async (req:any): Promise<string> => {
     const headers = req.headers['authorization']
