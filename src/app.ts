@@ -1,6 +1,6 @@
 import dotenv from 'dotenv'
 import path from 'path'
-dotenv.config({ path: path.join(__dirname, '.env') })
+dotenv.config({ path: path.join(__dirname, '../','.env') })
 import express, { type Application, type Request, type Response, type NextFunction } from 'express'
 import cors from 'cors'
 import morgan from 'morgan'
@@ -49,17 +49,21 @@ app.use(
   swaggerUi.setup(specs)
 );
 
-const startApp = async (PORT: any) => {
-  const uri: string = process.env.MONGOURI ?? ''
+const startApp = async () => {
+  try {
+    const uri: string = process.env.MONGOURI ?? ''
   if (!uri) {
     console.error('MONGOURI is not defined.');
     return;
   }
-  void connection(uri)
-  // await seedcategory()
+  await connection(uri)
+    
+  } catch (error) {
+    console.error('❌ Database connection failed:', error);
+  }
+   // await seedcategory()
   // await seedproducts()
-  app.listen(PORT, () => {
-    console.log(`Express is listening at http://localhost:${PORT}`)
-  })
 }
-export default startApp
+startApp()
+export default app
+

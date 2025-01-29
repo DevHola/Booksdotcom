@@ -1,17 +1,16 @@
 {
   "compilerOptions": {
     "strictPropertyInitialization": false,
-    "target": "ES2021",                          
-    "module": "commonjs",                    
-    "lib": ["es6"],                     
-    "allowJs": true,
-    "outDir": "build",                          
+    "target": "ES2021",
+    "module": "commonjs",
+    "lib": ["es6"],
+    "allowJs": true,  // Set to true if you have JS files to include
+    "outDir": "dist",  // Change this to 'dist' to match deployment folder
     "rootDir": "src",
-    "strict": true,         
+    "strict": true,
     "noImplicitAny": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "typeRoots": ["./node_modules/@types", "src/@types"],  
-    "types": ["node", "express"]  
+    "types": ["node", "express"]  // Keep this if using node/express types
   }
 }
