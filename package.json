@@ -2,8 +2,9 @@
   "name": "booksdotcom",
   "version": "1.0.0",
   "description": "booksdotcom",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "scripts": {
+    "build": "tsc",  
     "dev": "nodemon src/index.ts",
     "seed": "node src/models/seeders/index.ts",
     "start": "node dist/app.js"
