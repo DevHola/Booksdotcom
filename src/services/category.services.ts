@@ -14,7 +14,7 @@ export const getCategoryByID = async (id: string): Promise<ICategory> => {
     const category = await CategoryModel.findById(id)
     return category as ICategory
 }
-export const Categories = async (): Promise<ICategory[]> => {
-    const category = await CategoryModel.find()
+export const Categories = async (page: number, limit: number): Promise<ICategory[]> => {
+    const category = await CategoryModel.find().skip((page - 1) * limit).limit(limit)
     return category as ICategory[]
 } 

@@ -80,7 +80,9 @@ export const GetCategoryById = async (req: Request, res: Response, next: NextFun
 }
 export const GetCategories = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
-        const categories = await Categories()
+        const page = parseInt(req.query.page as string) || 1
+        const limit = parseInt(req.query.limit as string) || 10
+        const categories = await Categories(page, limit)
         return res.status(200).json({
             status: true,
             categories

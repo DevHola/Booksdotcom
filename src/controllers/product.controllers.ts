@@ -14,7 +14,7 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
     try {
 
         const urls = await cloudinaryImageUploadMethod(req.files, process.env.PRODUCTIMGFOLDER as string)
-        const { title, description, Isbn,language, author, publisher, published_Date, noOfPages, categoryid } = req.body
+        const { title, description, isbn,language, author, publisher, published_Date, noOfPages, categoryid } = req.body
         const user = req.user as DecodedToken
         const id = user.id
         if (!req.files) {
@@ -25,7 +25,7 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
         const data = {
             title: title as string,
             description: description as string,
-            ISBN: Isbn as string,
+            ISBN: isbn as string,
             author: author as string[],
             publisher: publisher as string,
             published_Date: new Date(published_Date) as Date,

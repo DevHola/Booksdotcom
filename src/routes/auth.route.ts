@@ -22,20 +22,34 @@ const AuthRouter = express.Router()
  *         password:
  *           type: string
  *           description: The user's password
- * 
+ *
  *     WishlistItem:
  *       type: object
  *       properties:
  *         itemId:
- *           type: string[]
+ *           type: array
+ *           items:
+ *             type: string
  *           description: The ID of the product in the wishlist
- * 
+ *
  *     Preference:
  *       type: object
  *       properties:
  *         category:
- *           type: string[]
- *           description: The id of category in preference
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: The ID of category in preference
+ *     
+ *     Profile:
+ *       type: object
+ *       properties:
+ *         bio:
+ *           type: string
+ *           description: The author biography
+ *         img:
+ *           type: string
+ *           description: The author image link
  */
 
 /**
@@ -57,6 +71,10 @@ const AuthRouter = express.Router()
  *                 type: string
  *               password:
  *                 type: string
+ *             required:
+ *               - name
+ *               - email
+ *               - password
  *     responses:
  *       200:
  *         description: User registered successfully
@@ -82,13 +100,16 @@ AuthRouter.post('/register', registerValidation, register)
  *                 type: string
  *               password:
  *                 type: string
+ *             required:
+ *               - email
+ *               - password
  *     responses:
  *       200:
  *         description: Login successful
  *       400:
  *         description: Bad request
  *       401:
- *         description: Incorrect credentials
+ *         description: I
  */
 AuthRouter.post('/login', loginValidation, login)
 
@@ -107,6 +128,8 @@ AuthRouter.post('/login', loginValidation, login)
  *             properties:
  *               email:
  *                 type: string
+ *             required:
+ *               - email
  *     responses:
  *       200:
  *         description: Reset token sent to email
@@ -124,14 +147,14 @@ AuthRouter.post('/forget', forgetValidation, forgetPassword)
  *     summary: Reset the user's password
  *     tags: [User]
  *     security:
- *       - Authorization: [] # Use Bearer Token for authorization
+ *       - BearerAuth: [] # Reference the security scheme correctly
  *     parameters:
  *       - in: header
  *         name: Authorization
  *         required: true
  *         schema:
  *           type: string
- *         description: Bearer token for rest authorization - Get from forget password mail sent to user email
+ *         description: Bearer token for password reset authorization - Get from forget password email sent to user
  *     requestBody:
  *       required: true
  *       content:
@@ -142,6 +165,8 @@ AuthRouter.post('/forget', forgetValidation, forgetPassword)
  *               password:
  *                 type: string
  *                 description: The new password for the user
+ *             required:
+ *               - password
  *     responses:
  *       200:
  *         description: Password reset successfully
@@ -158,9 +183,9 @@ AuthRouter.put('/reset', resetPasswordValidation, ResetPassword)
  *     summary: Get authenticated user's information
  *     tags: [User]
  *     security:
- *       - Token: []
+ *       - BearerAuth: [] # Correct security scheme
  *     parameters:
- *       - in: headers
+ *       - in: header  # Fixed from "headers" to "header"
  *         name: Authorization
  *         required: true
  *         schema:
@@ -181,14 +206,14 @@ AuthRouter.get('/user', authTokenValidation, passport.authenticate('jwt', { sess
  *     summary: Activate a user account
  *     tags: [User]
  *     security:
- *       - Token: []
+ *       - BearerAuth: [] # Corrected security scheme
  *     parameters:
  *       - in: header
  *         name: Authorization
  *         required: true
  *         schema:
  *           type: string
- *         description: Bearer token for authorization - GET FROM REGISTER RESPONSE SHORT TIME TOKEN
+ *         description: Bearer token for authorization - Get from register response (short-lived token)
  *     requestBody:
  *       required: true
  *       content:
@@ -198,6 +223,9 @@ AuthRouter.get('/user', authTokenValidation, passport.authenticate('jwt', { sess
  *             properties:
  *               otp:
  *                 type: string
+ *                 description: One-time password (OTP) for account activation
+ *             required:
+ *               - otp
  *     responses:
  *       200:
  *         description: Account activated successfully
@@ -209,17 +237,17 @@ AuthRouter.patch('/activation', otpValidation, activateAccount)
  * @swagger
  * /auth/assignrole:
  *   patch:
- *     summary: a user choose a role
+ *     summary: A user chooses a role
  *     tags: [User]
  *     security:
- *       - Token: []
+ *       - BearerAuth: [] # Corrected security scheme
  *     parameters:
  *       - in: header
  *         name: Authorization
  *         required: true
  *         schema:
  *           type: string
- *         description: Bearer token for authorization - GET FROM REGISTER RESPONSE SHORT TIME TOKEN
+ *         description: Bearer token for authorization - Get from register response (short-lived token)
  *     requestBody:
  *       required: true
  *       content:
@@ -229,6 +257,9 @@ AuthRouter.patch('/activation', otpValidation, activateAccount)
  *             properties:
  *               role:
  *                 type: string
+ *                 description: The role to be assigned to the user
+ *             required:
+ *               - role
  *     responses:
  *       200:
  *         description: Account role assigned successfully
@@ -240,17 +271,17 @@ AuthRouter.patch('/assignrole', assignroleValidation, assignRole)
  * @swagger
  * /auth/init/verify:
  *   patch:
- *     summary: user initiate verification
+ *     summary: User initiates verification
  *     tags: [User]
  *     security:
- *       - Token: []
+ *       - BearerAuth: [] # Corrected security scheme
  *     parameters:
  *       - in: header
  *         name: Authorization
  *         required: true
  *         schema:
  *           type: string
- *         description: Bearer token for authorization - GET FROM REGISTER RESPONSE SHORT TIME TOKEN
+ *         description: Bearer token for authorization - Get from register response (short-lived token)
  *     requestBody:
  *       required: true
  *       content:
@@ -260,12 +291,16 @@ AuthRouter.patch('/assignrole', assignroleValidation, assignRole)
  *             properties:
  *               email:
  *                 type: string
+ *                 description: The email to receive the verification link
+ *             required:
+ *               - email
  *     responses:
  *       200:
  *         description: Account verification mail successfully sent
  *       400:
  *         description: Bad request
  */
+
 AuthRouter.post('/init/verify', initVerifyValidation, initActivation)
 AuthRouter.get('/', (req, res) => {
     res.send("<button><a href='/api/v1/auth/google'>Login With Google</a></button>")
@@ -274,7 +309,7 @@ AuthRouter.get('/', (req, res) => {
  * @swagger
  * /auth/google:
  *   patch:
- *     summary: google 0Auth
+ *     summary: Google OAuth authentication
  *     tags: [User]
  *     requestBody:
  *       required: true
@@ -283,9 +318,12 @@ AuthRouter.get('/', (req, res) => {
  *           schema:
  *             type: object
  *             properties:
+ *               googleToken:
+ *                 type: string
+ *                 description: The Google OAuth token provided by the client
  *     responses:
  *       200:
- *         description: Account Auth successful
+ *         description: Account authentication successful
  *       400:
  *         description: Bad request
  */
@@ -302,9 +340,6 @@ AuthRouter.get('/google/callback', passport.authenticate( 'google', {
     } else if (action === 'register'){
       return res.redirect(`http://yourfrontend.com/register-success?token=${token}`);
     }
-    // res.json({
-    //     accesstoken: req.user
-    // })
   });
 AuthRouter.get('/callback/failure' , (req , res) => {
     res.status(401).json({
@@ -315,45 +350,10 @@ AuthRouter.get('/callback/failure' , (req , res) => {
  * @swagger
  * /auth/user/wishlist:
  *   post:
- *     summary: Add an item to the user's wishlist - product(id)
+ *     summary: Add an item to the user's wishlist
  *     tags: [Wishlist]
  *     security:
- *       - Token: []
- *     parameters:
- *       - in: header
- *         name: Authorization
- *         required: true
- *         schema:
- *           type: string
- *         description: Bearer token for authorization
- *     requestBody:
- *       required: true
- *        content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               product:
- *                 type: string
- *     responses:
- *       200:
- *         description: Item added to wishlist
- *       400:
- *         description: Bad Request
- *       401:
- *         description: Unauthorized
-
- */
-AuthRouter.post('/user/wishlist', wishlistValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), addToWish)
-
-/**
- * @swagger
- * /auth/user/wishlist:
- *   patch:
- *     summary: Remove an item from the user's wishlist
- *     tags: [Wishlist]
- *     security:
- *       - Token: []
+ *       - BearerAuth: [] # Corrected security scheme
  *     parameters:
  *       - in: header
  *         name: Authorization
@@ -370,11 +370,47 @@ AuthRouter.post('/user/wishlist', wishlistValidation, passport.authenticate('jwt
  *             properties:
  *               product:
  *                 type: string
+ *                 description: The product ID to add to the wishlist
  *     responses:
  *       200:
- *         description: Item removed from wishlist
+ *         description: Item successfully added to wishlist
  *       400:
- *         description: Bad Request
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ */
+AuthRouter.post('/user/wishlist', wishlistValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), addToWish)
+
+/**
+ * @swagger
+ * /auth/user/wishlist:
+ *   patch:
+ *     summary: Remove an item from the user's wishlist
+ *     tags: [Wishlist]
+ *     security:
+ *       - BearerAuth: [] # Updated security to match Bearer token scheme
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bearer token for authorization
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               product:
+ *                 type: string
+ *                 description: The product ID to remove from the wishlist
+ *     responses:
+ *       200:
+ *         description: Item successfully removed from wishlist
+ *       400:
+ *         description: Bad request
  *       401:
  *         description: Unauthorized
  */
@@ -383,10 +419,10 @@ AuthRouter.patch('/user/wishlist', wishlistValidation, passport.authenticate('jw
  * @swagger
  * /auth/user/wishlist:
  *   get:
- *     summary: Get authenticated user's wishlist
+ *     summary: Get the authenticated user's wishlist
  *     tags: [Wishlist]
  *     security:
- *       - Token: []
+ *       - BearerAuth: [] # Updated security to match Bearer token scheme
  *     parameters:
  *       - in: header
  *         name: Authorization
@@ -396,7 +432,7 @@ AuthRouter.patch('/user/wishlist', wishlistValidation, passport.authenticate('jw
  *         description: Bearer token for authorization
  *     responses:
  *       200:
- *         description: Authenticated user's wishlist information
+ *         description: Successfully retrieved authenticated user's wishlist
  *       401:
  *         description: Unauthorized
  */
@@ -408,7 +444,7 @@ AuthRouter.get('/user/wishlist', authTokenValidation, passport.authenticate('jwt
  *     summary: Add a user preference - preference(categoryid) 
  *     tags: [Preferences]
  *     security:
- *       - Token: []
+ *       - BearerAuth: []
  *     parameters:
  *       - in: header
  *         name: Authorization
@@ -441,7 +477,7 @@ AuthRouter.post('/user/preference', preferenceValidation, passport.authenticate(
  *     summary: Remove items from the user's category preference
  *     tags: [Preferences]
  *     security:
- *       - Token: []
+ *       - BearerAuth: []
  *     parameters:
  *       - in: header
  *         name: Authorization
@@ -476,7 +512,7 @@ AuthRouter.patch('/user/preference', preferenceValidation, passport.authenticate
  *     summary: Get authenticated user's preferences
  *     tags: [Preferences]
  *     security:
- *       - Token: []
+ *       - BearerAuth: []
  *     parameters:
  *       - in: header
  *         name: Authorization
@@ -496,7 +532,7 @@ AuthRouter.get('/user/preference', authTokenValidation, passport.authenticate('j
  * /auth/featured/authors:
  *   get:
  *     summary: Get a list of featured authors
- *     tags: [Authors]
+ *     tags: [Profile]
  *     responses:
  *       200:
  *         description: List of featured authors
@@ -509,9 +545,9 @@ AuthRouter.get('/featured/authors', featuredAuthors)
  * /auth/author/profile:
  *   post:
  *     summary: create a author profile  
- *     tags: [Authors]
+ *     tags: [Profile]
  *     security:
- *       - Token: []
+ *       - BearerAuth: []
  *     parameters:
  *       - in: header
  *         name: Authorization
@@ -542,9 +578,9 @@ AuthRouter.post('/author/profile', profileValidation, passport.authenticate('jwt
  * /auth/author/profile:
  *   patch:
  *     summary: Edit author's profile
- *     tags: [Authors]
+ *     tags: [Profile]
  *     security:
- *       - Token: []
+ *       - BearerAuth: []
  *     parameters:
  *       - in: header
  *         name: Authorization
@@ -577,7 +613,7 @@ AuthRouter.patch('/author/profile/edit', passport.authenticate('jwt', { session:
  * /auth/author/profile:
  *   get:
  *     summary: Get an author profile
- *     tags: [Authors]
+ *     tags: [Profile]
  *     responses:
  *       200:
  *         description: Author's profile
@@ -589,9 +625,9 @@ AuthRouter.get('/author/profile', getAuthorProfile)
  * /auth/author/achievement:
  *   post:
  *     summary: create a author achievement  
- *     tags: [Authors]
+ *     tags: [Profile]
  *     security:
- *       - Token: []
+ *       - BearerAuth: []
  *     parameters:
  *       - in: header
  *         name: Authorization
@@ -622,9 +658,9 @@ AuthRouter.post('/author/achievement', achievementValidation, passport.authentic
  * /auth/author/achievement:
  *   patch:
  *     summary: Edit author's achievement
- *     tags: [Authors]
+ *     tags: [Profile]
  *     security:
- *       - Token: []
+ *       - BearerAuth: []
  *     parameters:
  *       - in: header
  *         name: Authorization

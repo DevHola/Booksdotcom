@@ -219,15 +219,18 @@ export const bestSellers = async (page: number, limit: number): Promise<ISearchR
 }
 export const recentlySold = async (page: number, limit: number): Promise<ISearchResult> => {
     const getRecentOrder = await OrderModel.find().sort({ createdAt: -1 }).limit(50)
-    const getSubOrder = await SubOrderModel.find({orderid: { $in: getRecentOrder}})
+    const getSubOrder = await SubOrderModel.find({orderid: { $in: getRecentOrder}}).populate('products.product').exec()
     // NEEDS REFACTORING & Testing
     let productarray: any[] = []
-    for(let product of getSubOrder){
-         productarray = productarray.concat(product.products)
+    for(let sub of getSubOrder){
+         productarray = productarray.concat(sub.products)
     }
-    //remove duplicates
     productarray = [...new Set(productarray)];
-     const products = await productModel.find({_id: { $in: productarray } }).skip(( page -1 ) * limit).limit(limit)
+    let productid :any [] = []
+    for(let product of productarray){
+        productid.push(product.product)
+    }
+     const products = await productModel.find({_id: { $in: productid } }).skip(( page -1 ) * limit).limit(limit)
 
      return {products, currentPage: page, totalPage: Math.ceil(productarray.length/limit), totalProducts: productarray.length} as ISearchResult
 
