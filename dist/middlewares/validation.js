@@ -4,6 +4,7 @@ exports.getReviewValidation = exports.getUserReviewsValidation = exports.editRev
 const express_validator_1 = require("express-validator");
 const auth_services_1 = require("../services/auth.services");
 const category_services_1 = require("../services/category.services");
+const format_services_1 = require("../services/format.services");
 exports.registerValidation = [
     (0, express_validator_1.body)('name')
         .exists({ checkFalsy: true })
@@ -297,6 +298,13 @@ exports.formatValidation = [
         .withMessage('Format type is required')
         .isString()
         .withMessage('Format type must be string')
+        .custom(async (type, { req }) => {
+        const product = req.body;
+        const result = await (0, format_services_1.checkTypeExist)(type, product);
+        if (result) {
+            throw new Error('format already exists for this products');
+        }
+    })
         .trim(),
     (0, express_validator_1.body)('price')
         .exists({ checkFalsy: true })

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeDiscountStatus = exports.updateDiscountStatus = exports.updateStockOrderInitiation = exports.groupProducts = exports.getProductAuthoor = exports.addPreviewFile = exports.recentlySold = exports.bestSellers = exports.bestBooksFromGenre = exports.newArrivals = exports.searchProducts = exports.EditProduct = exports.getProductsByPublisher = exports.getProductsByAuthor = exports.getProductsByCategory = exports.getProductByIsbn = exports.getProductByTitle = exports.getAllProduct = exports.getProductById = exports.newProduct = void 0;
+exports.removeDiscountStatus = exports.updateDiscountStatus = exports.updateStockOrderInitiation = exports.groupProducts = exports.getProductAuthoor = exports.updateCoverImgs = exports.addPreviewFile = exports.recentlySold = exports.bestSellers = exports.bestBooksFromGenre = exports.newArrivals = exports.searchProducts = exports.EditProduct = exports.getProductsByPublisher = exports.getProductsByAuthor = exports.getProductsByCategory = exports.getProductByIsbn = exports.getProductByTitle = exports.getAllProduct = exports.getProductById = exports.newProduct = void 0;
 const product_model_1 = __importDefault(require("../models/product.model"));
 const category_model_1 = __importDefault(require("../models/category.model"));
 const order_model_1 = __importDefault(require("../models/order.model"));
@@ -36,7 +36,10 @@ const getAllProduct = async (page, limit) => {
 };
 exports.getAllProduct = getAllProduct;
 const getProductByTitle = async (title) => {
-    return await product_model_1.default.findOne({ title: title });
+    return await product_model_1.default.findOne({ title: title }).populate({
+        path: 'categoryid',
+        select: 'name'
+    }).exec();
 };
 exports.getProductByTitle = getProductByTitle;
 const getProductByIsbn = async (Isbn) => {
@@ -89,8 +92,22 @@ const getProductsByPublisher = async (publisher, page, limit) => {
     return await product_model_1.default.find({ publisher: publisher }).skip((page - 1) * limit).limit(limit).populate('categoryid').exec();
 };
 exports.getProductsByPublisher = getProductsByPublisher;
-const EditProduct = async (id) => {
-    return product_model_1.default.findByIdAndUpdate(id, {}, { upsert: true });
+const EditProduct = async (userid, product, data) => {
+    const singleproduct = await product_model_1.default.findOneAndUpdate({ _id: product, user: userid }, {
+        $set: {
+            title: data.title,
+            description: data.description,
+            ISBN: data.ISBN,
+            author: data.author,
+            publisher: data.publisher,
+            published_Date: data.published_Date,
+            noOfPages: data.noOfPages,
+            language: data.language
+        }
+    });
+    if (!singleproduct) {
+        throw new Error('error editing product');
+    }
 };
 exports.EditProduct = EditProduct;
 // modify price is now in format
@@ -104,6 +121,9 @@ const searchProducts = async (filter, page, limit) => {
     }
     if (filter.publisher) {
         query.publisher = filter.publisher;
+    }
+    if (filter.isbn) {
+        query.ISBN = filter.isbn;
     }
     if (filter.minPublishedDate) {
         query.published_Date = { ...query.published_Date, $gte: filter.minPublishedDate };
@@ -129,7 +149,10 @@ const searchProducts = async (filter, page, limit) => {
     if (filter.categoryid !== undefined) {
         query.categoryid = filter.categoryid;
     }
-    const products = await product_model_1.default.find(query).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit);
+    const products = await product_model_1.default.find(query).populate({
+        path: 'categoryid',
+        select: 'name'
+    }).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit);
     const producttotal = await product_model_1.default.find(query).countDocuments();
     return { products, currentPage: page, totalPage: Math.ceil(producttotal / limit), totalProducts: producttotal };
 };
@@ -194,23 +217,33 @@ const bestBooksFromGenre = async (category, page, limit) => {
 exports.bestBooksFromGenre = bestBooksFromGenre;
 const bestSellers = async (page, limit) => {
     const [products, totalproduct] = await Promise.all([
-        await product_model_1.default.find().sort({ totalSold: -1 }).skip((page - 1) * limit).limit(limit).exec(),
-        await product_model_1.default.countDocuments()
+        await product_model_1.default.find({ totalSold: { $gt: 1000 } }).populate({
+            path: 'categoryid',
+            select: 'name'
+        }).sort({ totalSold: -1 }).skip((page - 1) * limit).limit(limit).exec(),
+        await product_model_1.default.countDocuments({ totalSold: { $gt: 1000 } })
     ]);
     return { products, currentPage: page, totalPage: Math.ceil(totalproduct / limit), totalProducts: totalproduct };
 };
 exports.bestSellers = bestSellers;
 const recentlySold = async (page, limit) => {
     const getRecentOrder = await order_model_1.default.find().sort({ createdAt: -1 }).limit(50);
-    const getSubOrder = await suborder_model_1.default.find({ orderid: { $in: getRecentOrder } });
-    // NEEDS REFACTORING & Testing
+    if (!getRecentOrder)
+        throw new Error('No order exist');
+    const getSubOrder = await suborder_model_1.default.find({ orderid: { $in: getRecentOrder } }).populate('products').exec();
     let productarray = [];
-    for (let product of getSubOrder) {
-        productarray = productarray.concat(product.products);
+    for (let sub of getSubOrder) {
+        productarray = productarray.concat(sub.products);
     }
-    //remove duplicates
     productarray = [...new Set(productarray)];
-    const products = await product_model_1.default.find({ _id: { $in: productarray } }).skip((page - 1) * limit).limit(limit);
+    let productid = [];
+    for (let product of productarray) {
+        productid.push(product.product);
+    }
+    const products = await product_model_1.default.find({ _id: { $in: productid } }).populate({
+        path: 'categoryid',
+        select: 'name'
+    }).skip((page - 1) * limit).limit(limit);
     return { products, currentPage: page, totalPage: Math.ceil(productarray.length / limit), totalProducts: productarray.length };
 };
 exports.recentlySold = recentlySold;
@@ -230,6 +263,22 @@ const addPreviewFile = async (url, productid) => {
     return addpreviewfile;
 };
 exports.addPreviewFile = addPreviewFile;
+const updateCoverImgs = async (url, productid, userid) => {
+    const product = await product_model_1.default.findById(productid);
+    if (!product) {
+        throw new Error('Product not found');
+    }
+    const updatecoverimg = await product_model_1.default.findOneAndUpdate({ _id: product._id, user: userid }, {
+        $set: {
+            coverImage: url
+        }
+    }, { new: true });
+    if (!updatecoverimg) {
+        throw new Error('error updating cover image files');
+    }
+    return updatecoverimg;
+};
+exports.updateCoverImgs = updateCoverImgs;
 const getProductAuthoor = async (productid) => {
     const user = await product_model_1.default.findById(productid, { user: 1, _id: 0 });
     if (!user) {

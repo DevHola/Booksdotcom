@@ -24,8 +24,8 @@ const getCategoryByID = async (id) => {
     return category;
 };
 exports.getCategoryByID = getCategoryByID;
-const Categories = async () => {
-    const category = await category_model_1.default.find();
+const Categories = async (page, limit) => {
+    const category = await category_model_1.default.find().skip((page - 1) * limit).limit(limit);
     return category;
 };
 exports.Categories = Categories;

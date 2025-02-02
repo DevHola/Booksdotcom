@@ -87,7 +87,9 @@ const GetCategoryById = async (req, res, next) => {
 exports.GetCategoryById = GetCategoryById;
 const GetCategories = async (req, res, next) => {
     try {
-        const categories = await (0, category_services_1.Categories)();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const categories = await (0, category_services_1.Categories)(page, limit);
         return res.status(200).json({
             status: true,
             categories
