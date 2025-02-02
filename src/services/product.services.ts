@@ -1,4 +1,4 @@
-import productModel, { IProduct } from "../models/product.model";
+import productModel, { IProduct, IProductEdit } from "../models/product.model";
 import CategoryModel from "../models/category.model";
 import OrderModel from "../models/order.model";
 import SubOrderModel from "../models/suborder.model";
@@ -18,6 +18,7 @@ export interface IProductFilter {
     isDiscounted?: boolean;
     language?: string;
     categoryid?: string;
+    isbn?: string
   }
   export interface ISearchResult{
     products: [],
@@ -61,7 +62,10 @@ export const getAllProduct = async (page: number, limit: number): Promise<IProdu
 }
 
 export const getProductByTitle = async (title:string): Promise<IProduct> => {
-    return await productModel.findOne({title: title}) as IProduct
+    return await productModel.findOne({title: title}).populate({
+        path: 'categoryid',
+        select: 'name'
+    }).exec() as IProduct
 }
 export const getProductByIsbn = async (Isbn: string): Promise<IProduct> => {
     return await productModel.findOne({ISBN: Isbn}) as IProduct
@@ -110,9 +114,24 @@ export const getProductsByAuthor = async (author: string, page: number, limit: n
 export const getProductsByPublisher = async (publisher: string, page: number, limit: number): Promise<IProduct[]> => {
     return await productModel.find({publisher: publisher}).skip((page - 1) * limit).limit(limit).populate('categoryid').exec()
 }
-export const EditProduct = async (id:string): Promise<any> => {
-    return productModel.findByIdAndUpdate(id, {}, { upsert: true })
+export const EditProduct = async (userid:string, product:string, data: IProductEdit): Promise<any> => {
+    const singleproduct = await productModel.findOneAndUpdate({_id: product, user: userid}, {
+        $set: {
+            title: data.title,
+            description: data.description,
+            ISBN: data.ISBN,
+            author: data.author,
+            publisher: data.publisher,
+            published_Date: data.published_Date,
+            noOfPages: data.noOfPages,
+            language: data.language
+        }
+    })
+    if(!singleproduct){
+        throw new Error('error editing product')
+    }
 }
+
 // modify price is now in format
 export const searchProducts = async (filter: IProductFilter, page: number, limit: number): Promise<ISearchResult> => {
     const query: any = {}
@@ -124,6 +143,9 @@ export const searchProducts = async (filter: IProductFilter, page: number, limit
     }
     if(filter.publisher){
         query.publisher = filter.publisher
+    }
+    if(filter.isbn){
+        query.ISBN = filter.isbn
     }
     if(filter.minPublishedDate){
         query.published_Date = {...query.published_Date, $gte: filter.minPublishedDate  }
@@ -149,7 +171,10 @@ export const searchProducts = async (filter: IProductFilter, page: number, limit
     if(filter.categoryid !== undefined){
         query.categoryid = filter.categoryid  
     }
-    const products = await productModel.find(query).sort({ createdAt: -1 }).skip((page - 1) * limit ).limit(limit)
+    const products = await productModel.find(query).populate({
+        path: 'categoryid',
+        select: 'name'
+    }).sort({ createdAt: -1 }).skip((page - 1) * limit ).limit(limit)
     const producttotal = await productModel.find(query).countDocuments()
     return { products, currentPage: page, totalPage: Math.ceil(producttotal/limit), totalProducts: producttotal  } as ISearchResult
 }
@@ -212,15 +237,19 @@ export const bestBooksFromGenre = async (category: string, page: number, limit: 
 }
 export const bestSellers = async (page: number, limit: number): Promise<ISearchResult> => {
     const [products, totalproduct] = await Promise.all([
-        await productModel.find().sort({ totalSold: -1 }).skip((page - 1 ) *  limit).limit(limit).exec(),
-        await productModel.countDocuments()
+        await productModel.find({totalSold: {$gt: 1000}}).populate({
+            path: 'categoryid',
+            select: 'name'
+        }).sort({ totalSold: -1 }).skip((page - 1 ) *  limit).limit(limit).exec(),
+        await productModel.countDocuments({ totalSold: { $gt: 1000 } })
     ])
     return { products, currentPage: page, totalPage: Math.ceil(totalproduct/limit), totalProducts: totalproduct  } as ISearchResult    
 }
 export const recentlySold = async (page: number, limit: number): Promise<ISearchResult> => {
     const getRecentOrder = await OrderModel.find().sort({ createdAt: -1 }).limit(50)
-    const getSubOrder = await SubOrderModel.find({orderid: { $in: getRecentOrder}}).populate('products.product').exec()
-    // NEEDS REFACTORING & Testing
+    if(!getRecentOrder) throw new Error('No order exist')
+    const getSubOrder = await SubOrderModel.find({orderid: { $in: getRecentOrder}}).populate('products').exec()
+    
     let productarray: any[] = []
     for(let sub of getSubOrder){
          productarray = productarray.concat(sub.products)
@@ -230,7 +259,10 @@ export const recentlySold = async (page: number, limit: number): Promise<ISearch
     for(let product of productarray){
         productid.push(product.product)
     }
-     const products = await productModel.find({_id: { $in: productid } }).skip(( page -1 ) * limit).limit(limit)
+     const products = await productModel.find({_id: { $in: productid } }).populate({
+        path: 'categoryid',
+        select: 'name'
+    }).skip(( page -1 ) * limit).limit(limit)
 
      return {products, currentPage: page, totalPage: Math.ceil(productarray.length/limit), totalProducts: productarray.length} as ISearchResult
 
@@ -249,7 +281,21 @@ export const addPreviewFile = async (url: string, productid: string): Promise<IP
         throw new Error('error updating preview file')
     }
     return addpreviewfile as IProduct
-    
+}
+export const updateCoverImgs = async (url: string[], productid: string, userid: string): Promise<IProduct> => {
+    const product = await productModel.findById(productid)
+    if(!product){
+        throw new Error('Product not found')
+    }
+    const updatecoverimg = await productModel.findOneAndUpdate({_id: product._id, user: userid}, {
+        $set: {
+            coverImage: url
+        }
+    }, {new: true})
+    if(!updatecoverimg){
+        throw new Error('error updating cover image files')
+    }
+    return updatecoverimg as IProduct
 }
 export const getProductAuthoor = async (productid: string): Promise<IProduct> => {
     const user = await productModel.findById(productid, {user: 1, _id: 0})

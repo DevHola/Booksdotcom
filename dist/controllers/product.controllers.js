@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addProductPreviewFile = exports.recentlySoldBooks = exports.bestSellersProducts = exports.bestBooksByGenre = exports.newArrivalsProduct = exports.updatePriceFormat = exports.IncreaseStockForPhysicalFormat = exports.removeFormat = exports.addFormat = exports.search = exports.productEdit = exports.productByPublisher = exports.productByAuthor = exports.ProductByCategory = exports.productByIsbn = exports.getproductAll = exports.productByTitle = exports.productById = exports.createProduct = void 0;
+exports.updateCoverImages = exports.addProductPreviewFile = exports.recentlySoldBooks = exports.bestSellersProducts = exports.bestBooksByGenre = exports.newArrivalsProduct = exports.updatePriceFormat = exports.IncreaseStockForPhysicalFormat = exports.removeFormat = exports.addFormat = exports.search = exports.productEdit = exports.productByPublisher = exports.productByAuthor = exports.ProductByCategory = exports.productByIsbn = exports.getproductAll = exports.productByTitle = exports.productById = exports.createProduct = void 0;
 const express_validator_1 = require("express-validator");
 const product_services_1 = require("../services/product.services");
 const format_services_1 = require("../services/format.services");
@@ -14,7 +14,7 @@ const createProduct = async (req, res, next) => {
     }
     try {
         const urls = await (0, cloudinary_1.cloudinaryImageUploadMethod)(req.files, process.env.PRODUCTIMGFOLDER);
-        const { title, description, Isbn, language, author, publisher, published_Date, noOfPages, categoryid } = req.body;
+        const { title, description, isbn, language, author, publisher, published_Date, noOfPages, categoryid } = req.body;
         const user = req.user;
         const id = user.id;
         if (!req.files) {
@@ -25,7 +25,7 @@ const createProduct = async (req, res, next) => {
         const data = {
             title: title,
             description: description,
-            ISBN: Isbn,
+            ISBN: isbn,
             author: author,
             publisher: publisher,
             published_Date: new Date(published_Date),
@@ -78,7 +78,7 @@ const productByTitle = async (req, res, next) => {
         });
     }
     try {
-        const title = req.query.title || String;
+        const title = req.params.title || String;
         const product = await (0, product_services_1.getProductByTitle)(title);
         return res.status(200).json({
             status: true,
@@ -199,6 +199,25 @@ const productEdit = async (req, res, next) => {
         });
     }
     try {
+        const productid = req.params.id;
+        const { title, description, isbn, language, author, publisher, published_Date, noOfPages } = req.body;
+        const user = req.user;
+        const id = user.id;
+        const data = {
+            title: title,
+            description: description,
+            ISBN: isbn,
+            author: author,
+            publisher: publisher,
+            published_Date: new Date(published_Date),
+            noOfPages: noOfPages,
+            language: language
+        };
+        const product = (0, product_services_1.EditProduct)(id, productid, data);
+        return res.status(200).json({
+            status: true,
+            message: 'product updated'
+        });
     }
     catch (error) {
         next(error);
@@ -222,6 +241,7 @@ const search = async (req, res, next) => {
             isDiscounted: req.query.isDiscounted,
             language: req.query.language,
             category: req.query.category,
+            isbn: req.query.isbn
         };
         const products = await (0, product_services_1.searchProducts)(filters, page, limit);
         return res.status(200).json({
@@ -259,6 +279,7 @@ const addFormat = async (req, res, next) => {
                 data.product = product;
             }
         }
+        // if format type exist already 
         const format = await (0, format_services_1.addFormatToProduct)(data, product);
         return res.status(200).json({
             status: true,
@@ -482,3 +503,37 @@ const addProductPreviewFile = async (req, res, next) => {
     }
 };
 exports.addProductPreviewFile = addProductPreviewFile;
+const updateCoverImages = async (req, res, next) => {
+    const errors = (0, express_validator_1.validationResult)(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            errors: errors.array()
+        });
+    }
+    try {
+        const productid = req.query.productid;
+        const user = req.user;
+        const userid = user.id;
+        if (Array.isArray(req.files) && req.files.length > 0) {
+            const urls = await (0, cloudinary_1.cloudinaryImageUploadMethod)(req.files, process.env.PRODUCTBOOKPREVIEWFOLDER);
+            const preview = await (0, product_services_1.updateCoverImgs)(urls, productid, userid);
+            return res.status(200).json({
+                message: 'cover images uploaded',
+                status: true
+            });
+        }
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            if (error.message === 'Product not found') {
+                return res.status(404).json({
+                    message: 'Product not found'
+                });
+            }
+            else {
+                next(error);
+            }
+        }
+    }
+};
+exports.updateCoverImages = updateCoverImages;

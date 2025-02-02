@@ -215,7 +215,7 @@ export const getFeaturedAuthors = async (page: number, limit: number): Promise<I
             },
             {
                 $match: {
-                    'type': 'creator',
+                    'role': 'creator',
                     'profile.isFeatured': true
                 }
             },

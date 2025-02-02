@@ -234,7 +234,7 @@ const getFeaturedAuthors = async (page, limit) => {
             },
             {
                 $match: {
-                    'type': 'creator',
+                    'role': 'creator',
                     'profile.isFeatured': true
                 }
             },

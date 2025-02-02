@@ -1,5 +1,5 @@
 import express from 'express'
-import { addFormat, addProductPreviewFile, bestBooksByGenre, bestSellersProducts, createProduct, getproductAll, IncreaseStockForPhysicalFormat, newArrivalsProduct, productByAuthor, ProductByCategory, productById, productByIsbn, productByPublisher, productByTitle, productEdit, recentlySoldBooks, removeFormat, search, updatePriceFormat } from '../controllers/product.controllers'
+import { addFormat, addProductPreviewFile, bestBooksByGenre, bestSellersProducts, createProduct, getproductAll, IncreaseStockForPhysicalFormat, newArrivalsProduct, productByAuthor, ProductByCategory, productById, productByIsbn, productByPublisher, productByTitle, productEdit, recentlySoldBooks, removeFormat, search, updateCoverImages, updatePriceFormat } from '../controllers/product.controllers'
 import passport from 'passport'
 import { upload } from '../middlewares/cloudinary';
 import { allCreatorOrder, allCreatorOrderSuborder, createUserOrder, getUserOrder, handlerWebhook, orderSingleData } from '../controllers/order.controllers';
@@ -202,13 +202,10 @@ const productRouter = express.Router()
 productRouter.post('/', passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}),upload.array('img',4), createProduct)
 productRouter.get('/', getproductAll)
 productRouter.patch('/:id', passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}), productEdit)
+productRouter.patch('/edit/coverimage', passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}), upload.array('file',4), updateCoverImages )
 productRouter.get('/search', search)
 productRouter.get('/:id', productById)
-productRouter.get('/title/:title', productByTitle)
-productRouter.get('/isbn/:Isbn', productByIsbn)
-productRouter.get('/category/:category', ProductByCategory)
-productRouter.get('/author/:author', productByAuthor)
-productRouter.get('/publisher/:publisher', productByPublisher)
+productRouter.get('/single/:title', productByTitle)
 // format
 productRouter.post('/format', formatValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}), upload.array('file',1),  addFormat)
 productRouter.delete('/format/delete', removeformatValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}), removeFormat)

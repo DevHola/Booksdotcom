@@ -51,3 +51,8 @@ export const updateFormatPrice = async (data:any, productid: string, formatid: s
     }
     return format
 }
+export const checkTypeExist = async (type: string, product: string): Promise<Boolean> => {
+  const productdata =  await productModel.findById(product)
+  const result: boolean = productdata?.formats?.some((format) => format.type === type) ?? false
+  return result
+}

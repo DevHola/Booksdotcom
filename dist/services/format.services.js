@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateFormatPrice = exports.updateStockInProduct = exports.removeFormatFromProduct = exports.addFormatToProduct = void 0;
+exports.checkTypeExist = exports.updateFormatPrice = exports.updateStockInProduct = exports.removeFormatFromProduct = exports.addFormatToProduct = void 0;
 const product_model_1 = __importDefault(require("../models/product.model"));
 const addFormatToProduct = async (data, id) => {
     const product = await product_model_1.default.findById(id);
@@ -60,3 +60,9 @@ const updateFormatPrice = async (data, productid, formatid) => {
     return format;
 };
 exports.updateFormatPrice = updateFormatPrice;
+const checkTypeExist = async (type, product) => {
+    const productdata = await product_model_1.default.findById(product);
+    const result = productdata?.formats?.some((format) => format.type === type) ?? false;
+    return result;
+};
+exports.checkTypeExist = checkTypeExist;
