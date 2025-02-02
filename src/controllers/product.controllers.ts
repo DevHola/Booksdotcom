@@ -1,6 +1,6 @@
 import { Request,Response, NextFunction } from "express";
 import { validationResult } from "express-validator";
-import { addPreviewFile, bestBooksFromGenre, bestSellers, getAllProduct, getProductById, getProductByIsbn, getProductByTitle, getProductsByAuthor, getProductsByCategory, getProductsByPublisher, IProductFilter, ISearchResult, newArrivals, newProduct, recentlySold, searchProducts } from "../services/product.services";
+import { addPreviewFile, bestBooksFromGenre, bestSellers, EditProduct, getAllProduct, getProductById, getProductByIsbn, getProductByTitle, getProductsByAuthor, getProductsByCategory, getProductsByPublisher, IProductFilter, ISearchResult, newArrivals, newProduct, recentlySold, searchProducts, updateCoverImgs } from "../services/product.services";
 import { DecodedToken } from "../middlewares/passport";
 import { addFormatToProduct, removeFormatFromProduct, updateFormatPrice, updateStockInProduct } from "../services/format.services";
 import { cloudinaryImageUploadMethod } from "../middlewares/cloudinary";
@@ -76,8 +76,7 @@ export const productByTitle = async (req: Request, res: Response, next: NextFunc
         })
     }
     try {
-        const title  = req.query.title || String
-        
+        const title  = req.params.title || String
         const product = await getProductByTitle(title as string)
         return res.status(200).json({
             status: true,
@@ -193,6 +192,25 @@ export const productEdit = async (req: Request, res: Response, next: NextFunctio
         })
     }
     try {
+        const productid = req.params.id
+        const { title, description, isbn,language, author, publisher, published_Date, noOfPages } = req.body
+        const user = req.user as DecodedToken
+        const id = user.id
+        const data = {
+            title: title as string,
+            description: description as string,
+            ISBN: isbn as string,
+            author: author as string[],
+            publisher: publisher as string,
+            published_Date: new Date(published_Date) as Date,
+            noOfPages: noOfPages as number,
+            language: language as string
+        }
+        const product = EditProduct(id, productid, data)
+        return res.status(200).json({
+            status: true,
+            message: 'product updated'
+        })
         
     } catch (error) {
         next(error)
@@ -216,6 +234,7 @@ export const search = async (req: Request, res: Response, next: NextFunction): P
             isDiscounted: req.query.isDiscounted,
             language: req.query.language,
             category: req.query.category,
+            isbn: req.query.isbn
 
         }
         const products: ISearchResult = await searchProducts(filters as IProductFilter, page, limit)
@@ -252,6 +271,7 @@ export const addFormat = async (req: Request, res: Response, next: NextFunction)
             data.product = product
         }
     }
+    // if format type exist already 
     
     
     const format = await addFormatToProduct(data, product)
@@ -440,6 +460,38 @@ export const addProductPreviewFile = async (req: Request, res: Response, next: N
             const preview = await addPreviewFile(urls[0] as string, productid as string)
             return res.status(200).json({
                 message:'preview added',
+                status: true
+            })
+        }
+    } catch (error) {
+        if(error instanceof Error){
+            if(error.message === 'Product not found'){
+                return res.status(404).json({
+                    message: 'Product not found'
+                })
+            } else {
+                next(error)
+            }
+        }
+    }
+    
+}
+export const updateCoverImages = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    const errors = validationResult(req)
+    if(!errors.isEmpty()){
+        return res.status(400).json({
+            errors: errors.array()
+        })
+    }
+    try {
+        const productid = req.query.productid
+        const user = req.user as DecodedToken
+        const userid = user.id
+        if(Array.isArray(req.files) && req.files.length > 0){
+            const urls = await cloudinaryImageUploadMethod(req.files, process.env.PRODUCTBOOKPREVIEWFOLDER as string)
+            const preview = await updateCoverImgs(urls as string[], productid as string, userid)
+            return res.status(200).json({
+                message:'cover images uploaded',
                 status: true
             })
         }

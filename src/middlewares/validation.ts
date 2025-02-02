@@ -1,6 +1,7 @@
 import { body, header, query, param } from 'express-validator'
 import { UserByEmail, UserExist, nameExist } from '../services/auth.services';
 import { getCategoryByName } from '../services/category.services';
+import { checkTypeExist } from '../services/format.services';
 
 export const registerValidation = [
   body('name')
@@ -292,6 +293,13 @@ export const formatValidation = [
     .withMessage('Format type is required')
     .isString()
     .withMessage('Format type must be string')
+    .custom(async (type, {req}) => {
+      const product = req.body
+      const result = await checkTypeExist(type, product)
+      if(result) {
+        throw new Error('format already exists for this products')
+      }
+    })
     .trim(),
   body('price')
     .exists({ checkFalsy: true })

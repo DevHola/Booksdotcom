@@ -21,6 +21,16 @@ export interface IProduct extends Document {
     user: String    
     formats: IFormat[]
 }
+export interface IProductEdit {
+    title: String
+    description: String
+    ISBN: String
+    author: String[]
+    publisher: string
+    published_Date: Date
+    noOfPages: number
+    language: String
+}
 const ProductSchema = new Schema<IProduct>({
     title: {
         type: String,
