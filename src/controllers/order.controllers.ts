@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { createOrder, genTrackingCode, getAuthUserOrder, getCreatorOrders, getCreatorSingleOrder, getSingleOrderData, IOrderSearchResult, vBS, webHook } from "../services/order.services";
+import { createOrder, genTrackingCode, getAuthUserOrder, getCreatorOrders, getCreatorSingleOrder, getSingleOrderData, IOrderSearchResult, updateSubOrderStatus, vBS, webHook } from "../services/order.services";
 import { DecodedToken } from "../middlewares/passport";
 import { IOrder } from "../models/order.model";
 import crypto from 'crypto'
@@ -132,6 +132,20 @@ export const allCreatorOrderSuborder = async (req: Request, res: Response, next:
         return res.status(200).json({
             status: true,
             suborders
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+export const creatorUpdateSuborder = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    try {
+        const orderid = req.query.orderid as string
+        const suborderid = req.query.suborderid as string
+        const status = req.body.status
+        const suborder = await updateSubOrderStatus(orderid, suborderid, status)
+        return res.status(200).json({
+            status: true,
+            suborder
         })
     } catch (error) {
         next(error)

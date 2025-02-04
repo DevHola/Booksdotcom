@@ -36,7 +36,7 @@ const getAllProduct = async (page, limit) => {
 };
 exports.getAllProduct = getAllProduct;
 const getProductByTitle = async (title) => {
-    return await product_model_1.default.findOne({ title: title }).populate({
+    return await product_model_1.default.findOne({ title: title }, { "formats.downloadLink": 0 }).populate({
         path: 'categoryid',
         select: 'name'
     }).exec();
@@ -63,6 +63,9 @@ const getProductsByCategory = async (category, page, limit) => {
             $match: { 'category.name': category }
         },
         {
+            $unset: 'format.downloadLink'
+        },
+        {
             $project: {
                 title: 1,
                 description: 1,
@@ -85,26 +88,17 @@ const getProductsByCategory = async (category, page, limit) => {
 };
 exports.getProductsByCategory = getProductsByCategory;
 const getProductsByAuthor = async (author, page, limit) => {
-    return product_model_1.default.find({ author: { $in: author } }).skip((page - 1) * limit).limit(limit).populate('categoryid', 'user').exec();
+    return product_model_1.default.find({ author: { $in: author } }, { "format.downloadLink": 0 }).skip((page - 1) * limit).limit(limit).populate('categoryid', 'user').exec();
 };
 exports.getProductsByAuthor = getProductsByAuthor;
 const getProductsByPublisher = async (publisher, page, limit) => {
-    return await product_model_1.default.find({ publisher: publisher }).skip((page - 1) * limit).limit(limit).populate('categoryid').exec();
+    return await product_model_1.default.find({ publisher: publisher }, { "format.downloadLink": 0 }).skip((page - 1) * limit).limit(limit).populate('categoryid').exec();
 };
 exports.getProductsByPublisher = getProductsByPublisher;
 const EditProduct = async (userid, product, data) => {
     const singleproduct = await product_model_1.default.findOneAndUpdate({ _id: product, user: userid }, {
-        $set: {
-            title: data.title,
-            description: data.description,
-            ISBN: data.ISBN,
-            author: data.author,
-            publisher: data.publisher,
-            published_Date: data.published_Date,
-            noOfPages: data.noOfPages,
-            language: data.language
-        }
-    });
+        $set: data
+    }, { new: true });
     if (!singleproduct) {
         throw new Error('error editing product');
     }
@@ -149,7 +143,7 @@ const searchProducts = async (filter, page, limit) => {
     if (filter.categoryid !== undefined) {
         query.categoryid = filter.categoryid;
     }
-    const products = await product_model_1.default.find(query).populate({
+    const products = await product_model_1.default.find(query, { "formats.downloadLink": 0 }).populate({
         path: 'categoryid',
         select: 'name'
     }).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit);
@@ -159,7 +153,7 @@ const searchProducts = async (filter, page, limit) => {
 exports.searchProducts = searchProducts;
 const newArrivals = async (page, limit) => {
     const [products, totalProducts] = await Promise.all([
-        await product_model_1.default.find().sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+        await product_model_1.default.find({}, { "formats.downloadLink": 0 }).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
         await product_model_1.default.countDocuments()
     ]);
     return { products, currentPage: page, totalPage: Math.ceil(totalProducts / limit), totalProducts: totalProducts };
@@ -190,6 +184,9 @@ const bestBooksFromGenre = async (category, page, limit) => {
                 }
             },
             {
+                $unset: 'formats.downloadLink'
+            },
+            {
                 $project: {
                     title: 1,
                     description: 1,
@@ -217,7 +214,7 @@ const bestBooksFromGenre = async (category, page, limit) => {
 exports.bestBooksFromGenre = bestBooksFromGenre;
 const bestSellers = async (page, limit) => {
     const [products, totalproduct] = await Promise.all([
-        await product_model_1.default.find({ totalSold: { $gt: 1000 } }).populate({
+        await product_model_1.default.find({ totalSold: { $gt: 1000 } }, { 'format.downloadLink': 0 }).populate({
             path: 'categoryid',
             select: 'name'
         }).sort({ totalSold: -1 }).skip((page - 1) * limit).limit(limit).exec(),
@@ -240,7 +237,7 @@ const recentlySold = async (page, limit) => {
     for (let product of productarray) {
         productid.push(product.product);
     }
-    const products = await product_model_1.default.find({ _id: { $in: productid } }).populate({
+    const products = await product_model_1.default.find({ _id: { $in: productid } }, { 'format.downloadLink': 0 }).populate({
         path: 'categoryid',
         select: 'name'
     }).skip((page - 1) * limit).limit(limit);

@@ -27,7 +27,7 @@ const createProfile = async (data) => {
 exports.createProfile = createProfile;
 const editProfile = async (data, userId) => {
     const userprofile = await User_model_1.default.findById(userId, { profile: 1 });
-    const profile = await profile_model_1.default.findByIdAndUpdate(userprofile, {
+    const profile = await profile_model_1.default.findByIdAndUpdate(userprofile?.profile, {
         $set: data
     }, { new: true });
     if (!profile) {

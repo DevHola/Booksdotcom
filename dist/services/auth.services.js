@@ -101,7 +101,7 @@ const generateToken = async (data, type) => {
             return await jsonwebtoken_1.default.sign(verifydata, process.env.VERIFY_PRIVATE_SECRET, { algorithm: 'RS256', expiresIn: process.env.AUTH_TOKEN_EXPIRY });
             break;
         case 'login':
-            return await jsonwebtoken_1.default.sign(userdata, process.env.AUTH_ACCESS_PRIVATE_SECRET, { algorithm: 'RS256', expiresIn: process.env.AUTH_TOKEN_EXPIRY });
+            return await jsonwebtoken_1.default.sign(userdata, process.env.AUTH_ACCESS_PRIVATE_SECRET, { algorithm: 'RS256', expiresIn: process.env.AUTH_ACCESS_TOKEN_EXPIRY });
             break;
         case 'reset':
             return await jsonwebtoken_1.default.sign(userdata, process.env.RESET_PRIVATE_SECRET, { algorithm: 'RS256', expiresIn: process.env.AUTH_TOKEN_EXPIRY });

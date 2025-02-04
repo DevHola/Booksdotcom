@@ -19,6 +19,19 @@ const multerStorage = multer_1.default.diskStorage({
         cb(null, `${Date.now()}.${ext}`);
     },
 });
+const fileFilter = (req, file, cb) => {
+    const allowedMimeTypes = [
+        'image/jpeg', 'image/png', 'image/gif',
+        'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'audio/mpeg', 'audio/wav', 'audio/ogg'
+    ];
+    if (allowedMimeTypes.includes(file.mimetype)) {
+        cb(null, true);
+    }
+    else {
+        cb(new Error('Invalid file type'), false);
+    }
+};
 cloudinary_1.v2.config({
     cloud_name: process.env.CLOUD_NAME,
     api_key: process.env.APIKEY,
@@ -51,4 +64,4 @@ const cloudinaryImageUploadMethod = async (filesarray, foldername) => {
     }
 };
 exports.cloudinaryImageUploadMethod = cloudinaryImageUploadMethod;
-exports.upload = (0, multer_1.default)({ storage: multerStorage });
+exports.upload = (0, multer_1.default)({ storage: multerStorage, fileFilter });
