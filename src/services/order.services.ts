@@ -37,7 +37,7 @@ export const getAuthUserOrder = async (userid: string, page: number, limit: numb
 export const getSingleOrderData = async (id: string): Promise<ISubOrder[]> => {
     return await SubOrderModel.find({orderid: id}, {products: 1} ).populate({
         path: 'products.product',
-        select:'title coverImage'
+        select:'title coverImage format'
     }).exec() as ISubOrder[]  
 }
 export const getCreatorOrders = async (userid: string, page: number, limit: number): Promise<IOrderSearchResult> => {

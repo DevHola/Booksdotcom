@@ -62,7 +62,7 @@ export const getAllProduct = async (page: number, limit: number): Promise<IProdu
 }
 
 export const getProductByTitle = async (title:string): Promise<IProduct> => {
-    return await productModel.findOne({title: title}).populate({
+    return await productModel.findOne({title: title}, {"formats.downloadLink": 0}).populate({
         path: 'categoryid',
         select: 'name'
     }).exec() as IProduct
@@ -87,6 +87,9 @@ export const getProductsByCategory = async (category: string, page: number, limi
             $match: { 'category.name': category }
         },
         {
+            $unset: 'format.downloadLink'
+        },
+        {
             $project: {
                 title: 1,
                 description: 1,
@@ -109,24 +112,15 @@ export const getProductsByCategory = async (category: string, page: number, limi
     ]).skip((page - 1 ) * limit).limit(limit).exec()
 }
 export const getProductsByAuthor = async (author: string, page: number, limit: number): Promise<IProduct[]> => {
-    return productModel.find({author: { $in: author }}).skip((page - 1 ) * limit).limit(limit).populate('categoryid', 'user').exec()
+    return productModel.find({author: { $in: author }},{"format.downloadLink": 0}).skip((page - 1 ) * limit).limit(limit).populate('categoryid', 'user').exec()
 }
 export const getProductsByPublisher = async (publisher: string, page: number, limit: number): Promise<IProduct[]> => {
-    return await productModel.find({publisher: publisher}).skip((page - 1) * limit).limit(limit).populate('categoryid').exec()
+    return await productModel.find({publisher: publisher}, {"format.downloadLink": 0} ).skip((page - 1) * limit).limit(limit).populate('categoryid').exec()
 }
 export const EditProduct = async (userid:string, product:string, data: IProductEdit): Promise<any> => {
     const singleproduct = await productModel.findOneAndUpdate({_id: product, user: userid}, {
-        $set: {
-            title: data.title,
-            description: data.description,
-            ISBN: data.ISBN,
-            author: data.author,
-            publisher: data.publisher,
-            published_Date: data.published_Date,
-            noOfPages: data.noOfPages,
-            language: data.language
-        }
-    })
+        $set: data
+    }, {new: true})
     if(!singleproduct){
         throw new Error('error editing product')
     }
@@ -171,7 +165,7 @@ export const searchProducts = async (filter: IProductFilter, page: number, limit
     if(filter.categoryid !== undefined){
         query.categoryid = filter.categoryid  
     }
-    const products = await productModel.find(query).populate({
+    const products = await productModel.find(query,{"formats.downloadLink": 0}).populate({
         path: 'categoryid',
         select: 'name'
     }).sort({ createdAt: -1 }).skip((page - 1) * limit ).limit(limit)
@@ -180,7 +174,7 @@ export const searchProducts = async (filter: IProductFilter, page: number, limit
 }
 export const newArrivals = async (page: number, limit: number): Promise<ISearchResult> => {
     const [products, totalProducts] = await Promise.all([
-        await productModel.find().sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+        await productModel.find({},{"formats.downloadLink": 0}).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
         await productModel.countDocuments()
     ])  
     return { products, currentPage: page, totalPage: Math.ceil(totalProducts/limit), totalProducts: totalProducts  } as ISearchResult
@@ -210,6 +204,9 @@ export const bestBooksFromGenre = async (category: string, page: number, limit: 
             }
         },
         {
+            $unset:'formats.downloadLink'
+        },
+        {
             $project: {
                 title: 1,
                 description: 1,
@@ -237,7 +234,7 @@ export const bestBooksFromGenre = async (category: string, page: number, limit: 
 }
 export const bestSellers = async (page: number, limit: number): Promise<ISearchResult> => {
     const [products, totalproduct] = await Promise.all([
-        await productModel.find({totalSold: {$gt: 1000}}).populate({
+        await productModel.find({totalSold: {$gt: 1000}},{'format.downloadLink':0}).populate({
             path: 'categoryid',
             select: 'name'
         }).sort({ totalSold: -1 }).skip((page - 1 ) *  limit).limit(limit).exec(),
@@ -259,7 +256,7 @@ export const recentlySold = async (page: number, limit: number): Promise<ISearch
     for(let product of productarray){
         productid.push(product.product)
     }
-     const products = await productModel.find({_id: { $in: productid } }).populate({
+     const products = await productModel.find({_id: { $in: productid } }, {'format.downloadLink': 0}).populate({
         path: 'categoryid',
         select: 'name'
     }).skip(( page -1 ) * limit).limit(limit)

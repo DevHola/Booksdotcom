@@ -93,7 +93,7 @@ export const generateToken = async (data:IUser, type: string): Promise<string | 
             return await jwt.sign(verifydata, process.env.VERIFY_PRIVATE_SECRET as string, { algorithm: 'RS256', expiresIn: process.env.AUTH_TOKEN_EXPIRY as string })
             break;
         case 'login':
-            return await jwt.sign(userdata, process.env.AUTH_ACCESS_PRIVATE_SECRET as string, { algorithm: 'RS256', expiresIn: process.env.AUTH_TOKEN_EXPIRY as string })
+            return await jwt.sign(userdata, process.env.AUTH_ACCESS_PRIVATE_SECRET as string, { algorithm: 'RS256', expiresIn: process.env.AUTH_ACCESS_TOKEN_EXPIRY as string })
             break;
         case 'reset':
             return await jwt.sign(userdata, process.env.RESET_PRIVATE_SECRET as string, { algorithm: 'RS256', expiresIn: process.env.AUTH_TOKEN_EXPIRY as string })

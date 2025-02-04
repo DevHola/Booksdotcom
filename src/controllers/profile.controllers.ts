@@ -49,10 +49,11 @@ export const editUserProfile = async (req: Request, res: Response, next: NextFun
         const data: any = {
             biography: biography as string,
         }
-        if(Array.isArray(req.files) && req.files.length > 0){
+        if(Array.isArray(req.files)){
             const urls = await cloudinaryImageUploadMethod(req.files, process.env.PRODUCTPROFILEFOLDER as string)
-            data.imgsrc = urls[0]
+            data.imgsrc = urls[0] 
         }
+        if(data.imgsrc === undefined || data.imgsrc === '') data.imgsrc = req.body.imgsrc
         const profile = await editProfile(data, id)
         if(profile){
             return res.status(200).json({

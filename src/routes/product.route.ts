@@ -3,7 +3,7 @@ import { addFormat, addProductPreviewFile, bestBooksByGenre, bestSellersProducts
 import passport from 'passport'
 import { upload } from '../middlewares/cloudinary';
 import { allCreatorOrder, allCreatorOrderSuborder, createUserOrder, getUserOrder, handlerWebhook, orderSingleData } from '../controllers/order.controllers';
-import { formatValidation, previewFileValidation, removeformatValidation, StockValidation, updatePriceValidation } from '../middlewares/validation';
+import { authTokenValidation, createproductValidation, editProductImgValidation, editproductValidation, formatValidation, getProductbyTitleV, orderidqueryValidation, orderidValidation, previewFileValidation, removeformatValidation, StockValidation, updatePriceValidation, validateOrder } from '../middlewares/validation';
 import { authorization } from '../middlewares/passport';
 import { checkACoupon, couponDelete, createCoupon, getAllCoupons, getSingleCoupon } from '../controllers/coupon.controllers';
 
@@ -199,7 +199,7 @@ const productRouter = express.Router()
  *         description: Unauthorized (Token missing or invalid)
  */
 
-productRouter.post('/', passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}),upload.array('img',4), createProduct)
+productRouter.post('/', upload.array('img',4), createproductValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}), createProduct)
 productRouter.get('/', getproductAll)
 /**
  * @swagger
@@ -273,7 +273,7 @@ productRouter.get('/', getproductAll)
  *         description: Internal server error
  */
 
-productRouter.patch('/:id', passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}), productEdit)
+productRouter.patch('/:id', upload.array('coverImage', 4), editproductValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}), productEdit)
 /**
  * @swagger
  * /product/edit/coverimage:
@@ -319,7 +319,7 @@ productRouter.patch('/:id', passport.authenticate('jwt', { session: false }), au
  *       500:
  *         description: Internal server error
  */
-productRouter.patch('/edit/coverimage', passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}), upload.array('file',4), updateCoverImages )
+productRouter.patch('/edit/coverimage', editProductImgValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}), upload.array('file',4), updateCoverImages )
 /**
  * @swagger
  * /products/search:
@@ -495,14 +495,274 @@ productRouter.get('/:id', productById)
  *       400:
  *         description: Invalid product title format
  */
-productRouter.get('/single/:title', productByTitle)
+productRouter.get('/single/:title', getProductbyTitleV, productByTitle)
 // format
-productRouter.post('/format', formatValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}), upload.array('file',1),  addFormat)
+/**
+ * @swagger
+ * /product/format:
+ *   post:
+ *     summary: Add format to a product
+ *     tags: [Format]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               type:
+ *                 type: string
+ *                 enum: [ebook, physical, audiobook]
+ *                 description: The type of the format (ebook, physical, audiobook)
+ *               price:
+ *                 type: number
+ *                 description: The price of the format
+ *               stock:
+ *                 type: integer
+ *                 description: The stock available for the physical format (required if type is physical)
+ *               product:
+ *                 type: string
+ *                 description: The product ID to associate the format with
+ *               file:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: The file to upload for the format (optional, only for ebook or audiobook)
+ *     responses:
+ *       200:
+ *         description: Successfully added format to the product
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                 format:
+ *                   type: object
+ *                   description: The format object that was added to the product
+ *       400:
+ *         description: Bad request due to invalid input or missing parameters
+ *       401:
+ *         description: Unauthorized, user authentication failed
+ *       403:
+ *         description: Forbidden, user does not have sufficient permissions
+ *       404:
+ *         description: Product not found, invalid product ID
+ *       500:
+ *         description: Internal server error
+ */
+
+productRouter.post('/format', upload.array('file',1), formatValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}),  addFormat)
+/**
+ * @swagger
+ * /product/format/delete:
+ *   delete:
+ *     summary: Remove format from a product
+ *     tags: [Format]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               productid:
+ *                 type: string
+ *                 description: The ID of the product from which the format will be removed
+ *               formatid:
+ *                 type: string
+ *                 description: The ID of the format to remove from the product
+ *     responses:
+ *       200:
+ *         description: Successfully removed the format from the product
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                 format:
+ *                   type: object
+ *                   description: The format object that was removed
+ *       400:
+ *         description: Bad request due to invalid input or missing parameters
+ *       401:
+ *         description: Unauthorized, user authentication failed
+ *       403:
+ *         description: Forbidden, user does not have sufficient permissions
+ *       404:
+ *         description: Product not found, invalid product ID
+ *       500:
+ *         description: Internal server error
+ */
+
 productRouter.delete('/format/delete', removeformatValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}), removeFormat)
+/**
+ * @swagger
+ * /product/format/stock:
+ *   patch:
+ *     summary: Update stock for a physical product format
+ *     tags: [Format]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               productid:
+ *                 type: string
+ *                 description: The ID of the product whose format's stock is being updated
+ *               formatid:
+ *                 type: string
+ *                 description: The ID of the format whose stock is being updated
+ *               stock:
+ *                 type: integer
+ *                 description: The amount of stock to add to the format
+ *                 example: 50
+ *     responses:
+ *       200:
+ *         description: Successfully updated the stock for the physical format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                 format:
+ *                   type: object
+ *                   description: The updated format object
+ *       400:
+ *         description: Bad request due to invalid input or missing parameters
+ *       401:
+ *         description: Unauthorized, user authentication failed
+ *       403:
+ *         description: Forbidden, user does not have sufficient permissions
+ *       404:
+ *         description: Product not found, invalid product ID
+ *       500:
+ *         description: Internal server error
+ */
+
 productRouter.patch('/format/stock', StockValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}),  IncreaseStockForPhysicalFormat)
+/**
+ * @swagger
+ * /product/format/price:
+ *   patch:
+ *     summary: Update the price for a specific product format
+ *     tags: [Format]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               productid:
+ *                 type: string
+ *                 description: The ID of the product whose format's price is being updated
+ *               formatid:
+ *                 type: string
+ *                 description: The ID of the format whose price is being updated
+ *               price:
+ *                 type: number
+ *                 description: The new price to be set for the format
+ *                 example: 29.99
+ *     responses:
+ *       200:
+ *         description: Successfully updated the price for the specified format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   description: Indicates the success of the price update
+ *                 format:
+ *                   type: object
+ *                   description: The updated format object with the new price
+ *       400:
+ *         description: Bad request due to invalid input or missing parameters
+ *       401:
+ *         description: Unauthorized, user authentication failed
+ *       403:
+ *         description: Forbidden, user does not have sufficient permissions
+ *       404:
+ *         description: Product not found, invalid product ID
+ *       500:
+ *         description: Internal server error
+ */
+
 productRouter.patch('/format/price', updatePriceValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}),  updatePriceFormat)
+/**
+ * @swagger
+ * /product/book/preview:
+ *   patch:
+ *     summary: Add a preview file (such as a sample chapter or cover image) for a product
+ *     tags: [Product]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: productid
+ *         required: true
+ *         description: The ID of the product to which the preview file will be added
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: The preview file to be uploaded (e.g., a sample chapter or cover image)
+ *     responses:
+ *       200:
+ *         description: Successfully added the preview file for the product
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "preview added"
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *       400:
+ *         description: Bad request, validation errors in the request body or file upload
+ *       401:
+ *         description: Unauthorized, user authentication failed
+ *       403:
+ *         description: Forbidden, user does not have sufficient permissions
+ *       404:
+ *         description: Product not found, invalid product ID
+ *       500:
+ *         description: Internal server error
+ */
+
 productRouter.patch('/book/preview', previewFileValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}), upload.array('file',1), addProductPreviewFile )
-// homepage
+
 /**
  * @swagger
  * /products/new/arrival:
@@ -665,11 +925,184 @@ productRouter.get('/best/sellers', bestSellersProducts)
  */
 productRouter.get('/recently/sold', recentlySoldBooks)
 // order
-productRouter.post('/order', passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), createUserOrder)
-productRouter.get('/user/order', passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), getUserOrder)
-productRouter.get('/order/:id', passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), orderSingleData)
-productRouter.get('/creator/orders', passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), allCreatorOrder)
-productRouter.get('/creator/single/order', passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), allCreatorOrderSuborder)
+productRouter.post('/order', validateOrder, passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), createUserOrder)
+productRouter.get('/user/order', authTokenValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), getUserOrder)
+/**
+ * @swagger
+ * /product/order/{id}:
+ *   get:
+ *     summary: Get the details of a specific order by ID for a user
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The ID of the order to retrieve
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the order data with the product details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 order:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       productId:
+ *                         type: string
+ *                         example: "60b8d7d1a24f1a001f9f53b2"
+ *                       productName:
+ *                         type: string
+ *                         example: "Product Name"
+ *                       quantity:
+ *                         type: integer
+ *                         example: 1
+ *                       price:
+ *                         type: number
+ *                         example: 50.0
+ *       400:
+ *         description: Bad request, invalid order ID
+ *       401:
+ *         description: Unauthorized, user authentication failed
+ *       403:
+ *         description: Forbidden, user does not have sufficient permissions
+ *       404:
+ *         description: Order not found, invalid or non-existent order ID
+ *       500:
+ *         description: Internal server error
+ */
+
+productRouter.get('/order/:id', orderidValidation,  passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), orderSingleData)
+/**
+ * @swagger
+ * /product/creator/orders:
+ *   get:
+ *     summary: Get all orders for the creator with pagination
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: Page number for pagination
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: Number of orders per page for pagination
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved orders for the creator
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 orders:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       orderId:
+ *                         type: string
+ *                         example: "60b8d7d1a24f1a001f9f53b2"
+ *                       totalAmount:
+ *                         type: number
+ *                         example: 150.0
+ *                       orderStatus:
+ *                         type: string
+ *                         example: "pending"
+ *                       orderDate:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-01-30T14:00:00Z"
+ *       401:
+ *         description: Unauthorized, user authentication failed
+ *       403:
+ *         description: Forbidden, user does not have sufficient permissions
+ *       500:
+ *         description: Internal server error
+ */
+
+productRouter.get('/creator/orders',authTokenValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), allCreatorOrder)
+/**
+ * @swagger
+ * /product/creator/single/order:
+ *   get:
+ *     summary: Get the details of a single order and its suborders for a creator
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: orderid
+ *         required: true
+ *         description: The ID of the order to fetch suborders for
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the suborders for the specified order
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 suborders:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       suborderId:
+ *                         type: string
+ *                         example: "60b8d7d1a24f1a001f9f53b3"
+ *                       productId:
+ *                         type: string
+ *                         example: "60b8d7d1a24f1a001f9f53b2"
+ *                       quantity:
+ *                         type: integer
+ *                         example: 2
+ *                       price:
+ *                         type: number
+ *                         example: 100.0
+ *                       status:
+ *                         type: string
+ *                         example: "pending"
+ *       400:
+ *         description: Bad request, missing or invalid parameters
+ *       401:
+ *         description: Unauthorized, user authentication failed
+ *       403:
+ *         description: Forbidden, user does not have sufficient permissions
+ *       404:
+ *         description: Order not found, invalid order ID
+ *       500:
+ *         description: Internal server error
+ */
+
+productRouter.get('/creator/single/order',orderidqueryValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), allCreatorOrderSuborder)
 // coupon
 productRouter.post('/coupon', passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), createCoupon)
 productRouter.get('/coupons', passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), getAllCoupons)

@@ -2,7 +2,7 @@ import { body, header, query, param } from 'express-validator'
 import { UserByEmail, UserExist, nameExist } from '../services/auth.services';
 import { getCategoryByName } from '../services/category.services';
 import { checkTypeExist } from '../services/format.services';
-
+import mime from 'mime-types';
 export const registerValidation = [
   body('name')
     .exists({ checkFalsy: true })
@@ -184,11 +184,11 @@ export const profileValidation = [
     .withMessage('Authorization header must be a string')
     .matches(/^Bearer\s.+$/)
     .withMessage('Authorization header must be in the format: Bearer <token>'),
-  // body('biography')
-  //   .exists({ checkFalsy: true })
-  //   .withMessage('biography is required')
-  //   .isString()
-  //   .withMessage('biography must be a string'),
+  body('biography')
+    .exists({ checkFalsy: true })
+    .withMessage('biography is required')
+    .isString()
+    .withMessage('biography must be a string'),
   body('img')
     .optional()
     .isArray({ max: 1 })
@@ -197,6 +197,14 @@ export const profileValidation = [
     .optional()
     .isString()
     .withMessage('Each image must be a string (e.g., URL or file path)')
+    .custom(async (img) => {
+      const allowedMimeTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+      const mimeType = mime.lookup(img)
+      if(mimeType && !allowedMimeTypes.includes(mimeType)){
+        throw new Error('invalid file type')
+      }
+      return true
+    })
   ]
 // achievements
 export const achievementValidation = [
@@ -279,6 +287,155 @@ export const categoryNameOrIdValidation = [
     .withMessage('Category ID cannot be empty'),  
 ]
 //Products
+export const createproductValidation = [
+  body("title")
+    .exists({ checkFalsy: true })
+    .withMessage("title is required")
+    .isString()
+    .withMessage("title must be a string"),
+
+  body("description")
+    .exists({ checkFalsy: true })
+    .withMessage("Description is required")
+    .isString()
+    .withMessage("Description must be a string"),
+
+  body("isbn")
+    .exists({ checkFalsy: true })
+    .withMessage("ISBN is required")
+    .isString()
+    .withMessage("ISBN must be a string"),
+    // .isISBN()
+    // .withMessage("ISBN must be a valid ISBN"),
+
+  body("author")
+    .exists({ checkFalsy: true })
+    .withMessage("Author is required"),
+
+  body("publisher")
+    .exists({ checkFalsy: true })
+    .withMessage("Publisher is required")
+    .isString()
+    .withMessage("Publisher must be a string"),
+
+  body("published_Date")
+    .exists({ checkFalsy: true })
+    .withMessage("Published Date is required")
+    .isISO8601()
+    .withMessage("Published Date must be a valid date"),
+
+  body("noOfPages")
+    .exists({ checkFalsy: true })
+    .withMessage("Number of Pages is required")
+    .isInt()
+    .withMessage("Number of Pages must be an integer"),
+  
+  body("img.*")
+    .exists({ checkFalsy: true })
+    .withMessage("Each image is required")
+    .custom(async (img)=> {
+      const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif']
+      const mimeType = mime.lookup(img)
+      if(mimeType && !allowedMimeTypes.includes(mimeType)) {
+        throw new Error('Invalid image type')
+      }
+      return true
+    }),
+
+  body("language")
+    .exists({ checkFalsy: true })
+    .withMessage("Language is required")
+    .isString()
+    .withMessage("Language must be a string"),
+
+  body("categoryid")
+    .exists({ checkFalsy: true })
+    .withMessage("Category ID is required")
+    .isString()
+    .withMessage("Category ID must be a string"),
+]
+export const editproductValidation = [
+  header("Authorization")
+    .exists({ checkFalsy: true })
+    .withMessage("Authorization header is required")
+    .isString()
+    .withMessage("Authorization header must be a string")
+    .matches(/^Bearer\s.+$/)
+    .withMessage("Authorization header must be in the format: Bearer <token>"),
+
+  body("title")
+    .exists({ checkFalsy: true })
+    .withMessage("Title is required")
+    .isString()
+    .withMessage("Title must be a string"),
+
+  body("description")
+    .exists({ checkFalsy: true })
+    .withMessage("Description is required")
+    .isString()
+    .withMessage("Description must be a string"),
+
+  body("isbn")
+    .exists({ checkFalsy: true })
+    .withMessage("ISBN is required")
+    .isString()
+    .withMessage("ISBN must be a string"),
+    // .isISBN()
+    // .withMessage("ISBN must be a valid ISBN"),
+
+  body("author")
+    .exists({ checkFalsy: true })
+    .withMessage("Author is required")
+    .isArray()
+    .withMessage("Author must be an array of strings"),
+
+  body("publisher")
+    .exists({ checkFalsy: true })
+    .withMessage("Publisher is required")
+    .isString()
+    .withMessage("Publisher must be a string"),
+
+  body("published_Date")
+    .exists({ checkFalsy: true })
+    .withMessage("Published Date is required")
+    .isISO8601()
+    .withMessage("Published Date must be a valid date"),
+
+  body("noOfPages")
+    .exists({ checkFalsy: true })
+    .withMessage("Number of Pages is required")
+    .isInt()
+    .withMessage("Number of Pages must be an integer"),
+
+  body("language")
+    .exists({ checkFalsy: true })
+    .withMessage("Language is required")
+    .isString()
+    .withMessage("Language must be a string")
+]
+export const editProductImgValidation = [
+  body("file")
+    .isArray({ max: 4, min: 1 })
+    .withMessage("file must be an array with a maximum of 4 images"),
+  body("file.*")
+    .exists({ checkFalsy: true })
+    .withMessage("Each image is required")
+    .custom(async (img)=> {
+      const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif']
+      const mimeType = mime.lookup(img)
+      if(mimeType && !allowedMimeTypes.includes(mimeType)) {
+        throw new Error('Invalid image type')
+      }
+    })
+
+]
+export const getProductbyTitleV =[
+  param('title')
+    .exists({ checkFalsy: true })
+    .withMessage('Title is required')
+    .isString()
+    .withMessage('Title must be a string')  
+]
 //Format
 export const formatValidation = [
   header('Authorization')
@@ -293,18 +450,11 @@ export const formatValidation = [
     .withMessage('Format type is required')
     .isString()
     .withMessage('Format type must be string')
-    .custom(async (type, {req}) => {
-      const product = req.body
-      const result = await checkTypeExist(type, product)
-      if(result) {
-        throw new Error('format already exists for this products')
-      }
-    })
     .trim(),
   body('price')
     .exists({ checkFalsy: true })
     .withMessage('price is required')
-    .isString()
+    .isInt()
     .withMessage('price must be string')
     .trim(),
   body('stock')
@@ -320,14 +470,7 @@ export const formatValidation = [
     .trim()
     .isLength({ min: 1 })
     .withMessage('Product ID cannot be empty'),
-  body('file')
-    .optional()
-    .isArray({ max: 1 })
-    .withMessage('file must be an array with a maximum of 1 image'),
-  body('file.*')
-    .optional()
-    .isString()
-    .withMessage('Each file must be a string (e.g., URL or file path)')
+
 ]
 export const removeformatValidation = [
   header('Authorization')
@@ -419,15 +562,85 @@ export const previewFileValidation = [
     .withMessage('Product ID must be string')
     .trim(),
   body('file')
-    .optional()
+    .exists({ checkFalsy: true })
+    .withMessage('file is required')
     .isArray({ max: 1 })
     .withMessage('file must be an array with a maximum of 1 image'),
   body('file.*')
-    .optional()
-    .isString()
-    .withMessage('Each file must be a string (e.g., URL or file path)')
+    .exists({ checkFalsy: true })
+    .withMessage('Each file is required')
+    .custom(async (file) => {
+      const allowedMimeTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+      const mimeType = mime.lookup(file)
+      if(mimeType && !allowedMimeTypes.includes(mimeType)){
+        throw new Error('invalid file type')
+      }
+      return true
+    })
 ]
 //Order
+
+export const validateOrder = [
+  body('total')
+    .exists({ checkFalsy: true }).withMessage('Total is required')
+    .isInt({ min: 1 }).withMessage('Total must be a positive integer'),
+
+  body('products')
+    .isArray({ min: 1 }).withMessage('Products must be an array with at least one item'),
+
+  body('products.*.product')
+    .exists({ checkFalsy: true }).withMessage('Product ID is required')
+    .isString().withMessage('Product ID must be a string')
+    .isMongoId().withMessage('Product ID must be a valid MongoDB ObjectId'),
+
+  body('products.*.quantity')
+    .exists({ checkFalsy: true }).withMessage('Quantity is required')
+    .isInt({ min: 1 }).withMessage('Quantity must be a positive integer'),
+
+  body('products.*.format')
+    .exists({ checkFalsy: true }).withMessage('Format is required')
+    .isIn(['ebook', 'physical','audiobook']).withMessage('Format must be either "physical" or "digital"'),
+
+  body('products.*.price')
+    .exists({ checkFalsy: true }).withMessage('Price is required')
+    .isFloat({ min: 0 }).withMessage('Price must be a positive number'),
+
+  body('status')
+    .isBoolean().withMessage('Status must be a boolean'),
+
+  body('paymentHandler')
+    .exists({ checkFalsy: true }).withMessage('Payment handler is required')
+    .isString().withMessage('Payment handler must be a string')
+    .isIn(['paystack', 'stripe', 'paypal']).withMessage('Invalid payment handler'),
+
+  body('ref')
+    .exists({ checkFalsy: true }).withMessage('Reference is required')
+    .isString().withMessage('Reference must be a string'),
+];
+export const orderidValidation = [
+  header('Authorization')
+    .exists({ checkFalsy: true })
+    .withMessage('Authorization header is required')
+    .isString()
+    .withMessage('Authorization header must be a string')
+    .matches(/^Bearer\s.+$/)
+    .withMessage('Authorization header must be in the format: Bearer <token>'),
+  param('id')
+    .exists({ checkFalsy: true })
+    .withMessage('Order ID is required')
+]
+export const orderidqueryValidation = [
+  header('Authorization')
+    .exists({ checkFalsy: true })
+    .withMessage('Authorization header is required')
+    .isString()
+    .withMessage('Authorization header must be a string')
+    .matches(/^Bearer\s.+$/)
+    .withMessage('Authorization header must be in the format: Bearer <token>'),
+  query('id')
+    .exists({ checkFalsy: true })
+    .withMessage('Order ID is required')
+]
 //Review
 export const reviewValidation = [
   header('Authorization')
