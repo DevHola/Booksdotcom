@@ -572,7 +572,7 @@ AuthRouter.get('/featured/authors', featuredAuthors)
  *       401:
  *         description: Unauthorized
  */
-AuthRouter.post('/author/profile', profileValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), upload.array('img',1), createUserProfile)
+AuthRouter.post('/author/profile', upload.array('img',1), profileValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), createUserProfile)
 /**
  * @swagger
  * /auth/author/profile:
@@ -607,7 +607,7 @@ AuthRouter.post('/author/profile', profileValidation, passport.authenticate('jwt
  *       401:
  *         description: Unauthorized
  */
-AuthRouter.patch('/author/profile/edit', passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), editUserProfile)
+AuthRouter.patch('/author/profile/edit', upload.array('imgsrc',1) ,passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), editUserProfile)
 /**
  * @swagger
  * /auth/author/profile:

@@ -6,6 +6,20 @@ import crypto from 'crypto'
 import { groupProducts, IProductDefuse } from "../services/product.services";
 import { IOrderProduct } from "../models/suborder.model";
 
+// // Online Javascript Editor for free
+// // Write, Edit and Run your Javascript code using JS Online Compiler
+
+// const order = {
+//     "total": 10000,
+//     "products":[{"product":"67927df747908ab4f63f4f66","quantity":1,"format":"physical","price":100},{"product":"67927df747908ab4f63f4f68","quantity":1,"format":"physical","price":100}],
+//     "status":true,
+//     "paymentHandler":"paystack",
+//     "ref":"854hjdjfd"
+// }
+// const str = JSON.stringify(order, null, 2)
+// console.log(str)
+// const parse = JSON.parse(str)
+// console.log(parse)
 
 export const createUserOrder = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {

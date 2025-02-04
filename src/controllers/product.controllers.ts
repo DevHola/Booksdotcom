@@ -192,20 +192,26 @@ export const productEdit = async (req: Request, res: Response, next: NextFunctio
         })
     }
     try {
+        const data :any = {}
+        if(Array.isArray(req.files)){
+            const urls = await cloudinaryImageUploadMethod(req.files, process.env.PRODUCTIMGFOLDER as string)
+            data.coverImage = urls
+        }
+        if(data.coverImage === undefined || data.coverImage.length === 0) data.coverImage = req.body.coverImage 
         const productid = req.params.id
         const { title, description, isbn,language, author, publisher, published_Date, noOfPages } = req.body
         const user = req.user as DecodedToken
         const id = user.id
-        const data = {
-            title: title as string,
-            description: description as string,
-            ISBN: isbn as string,
-            author: author as string[],
-            publisher: publisher as string,
-            published_Date: new Date(published_Date) as Date,
-            noOfPages: noOfPages as number,
-            language: language as string
-        }
+        
+            data.title = title as string,
+            data.description = description as string,
+            data.ISBN = isbn as string,
+            data.author = author as string[],
+            data.publisher = publisher as string,
+            data.published_Date = new Date(published_Date) as Date,
+            data.noOfPages = noOfPages as number,
+            data.language = language as string
+        
         const product = EditProduct(id, productid, data)
         return res.status(200).json({
             status: true,
@@ -255,25 +261,27 @@ export const addFormat = async (req: Request, res: Response, next: NextFunction)
     }
     try {
     const { type, product, stock, price } = req.body
-    const data: any = {}
+    let data: any = {}
     if(type === 'physical'){
         data.type = type
         data.price = price
         data.stock = stock
         data.product = product
-    }
-    if(type !== 'physical'){
-        if(Array.isArray(req.files) && req.files.length > 0){
+    }else{
+        if(Array.isArray(req.files)){
             const urls = await cloudinaryImageUploadMethod(req.files, process.env.PRODUCTFILEDOWNLOADFOLDER as string)
             data.downloadLink = urls[0]
             data.type = type
             data.price = price
             data.product = product
+        } else{
+            return res.status(400).json({
+                message: 'no file uploaded'
+            })
         }
     }
     // if format type exist already 
-    
-    
+
     const format = await addFormatToProduct(data, product)
     return res.status(200).json({
         status: true,
