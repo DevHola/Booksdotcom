@@ -567,7 +567,7 @@ AuthRouter.get('/featured/authors', auth_controllers_1.featuredAuthors);
  *       401:
  *         description: Unauthorized
  */
-AuthRouter.post('/author/profile', validation_1.profileValidation, passport_1.default.authenticate('jwt', { session: false }), (0, passport_2.authorization)({ role: ['creator'] }), cloudinary_1.upload.array('img', 1), profile_controllers_1.createUserProfile);
+AuthRouter.post('/author/profile', cloudinary_1.upload.array('img', 1), validation_1.profileValidation, passport_1.default.authenticate('jwt', { session: false }), (0, passport_2.authorization)({ role: ['creator'] }), profile_controllers_1.createUserProfile);
 /**
  * @swagger
  * /auth/author/profile:
@@ -602,7 +602,7 @@ AuthRouter.post('/author/profile', validation_1.profileValidation, passport_1.de
  *       401:
  *         description: Unauthorized
  */
-AuthRouter.patch('/author/profile/edit', passport_1.default.authenticate('jwt', { session: false }), (0, passport_2.authorization)({ role: ['creator'] }), profile_controllers_1.editUserProfile);
+AuthRouter.patch('/author/profile/edit', cloudinary_1.upload.array('imgsrc', 1), passport_1.default.authenticate('jwt', { session: false }), (0, passport_2.authorization)({ role: ['creator'] }), profile_controllers_1.editUserProfile);
 /**
  * @swagger
  * /auth/author/profile:

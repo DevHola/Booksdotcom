@@ -115,3 +115,10 @@ export const vBS = async (groupProductslist: any, data: IOrder): Promise<IOrder>
     })
     
 }
+export const updateSubOrderStatus = async (orderid: string, suborderid: string, status: string): Promise<ISubOrder> => {
+    const suborder = await SubOrderModel.findOneAndUpdate({orderid: orderid, _id: suborderid}, {status: status}, {new: true})
+    if(!suborder){
+        throw new Error('Error updating suborder status')
+    }
+    return suborder
+}

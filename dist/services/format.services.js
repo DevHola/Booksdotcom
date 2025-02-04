@@ -61,8 +61,12 @@ const updateFormatPrice = async (data, productid, formatid) => {
 };
 exports.updateFormatPrice = updateFormatPrice;
 const checkTypeExist = async (type, product) => {
-    const productdata = await product_model_1.default.findById(product);
-    const result = productdata?.formats?.some((format) => format.type === type) ?? false;
-    return result;
+    const productdata = await product_model_1.default.find({ _id: product, 'formats.$.type': type });
+    if (productdata.length > 0) {
+        return true;
+    }
+    else {
+        return false;
+    }
 };
 exports.checkTypeExist = checkTypeExist;

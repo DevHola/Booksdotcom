@@ -3,10 +3,23 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.handlerWebhook = exports.allCreatorOrderSuborder = exports.allCreatorOrder = exports.orderSingleData = exports.getUserOrder = exports.createUserOrder = void 0;
+exports.handlerWebhook = exports.creatorUpdateSuborder = exports.allCreatorOrderSuborder = exports.allCreatorOrder = exports.orderSingleData = exports.getUserOrder = exports.createUserOrder = void 0;
 const order_services_1 = require("../services/order.services");
 const crypto_1 = __importDefault(require("crypto"));
 const product_services_1 = require("../services/product.services");
+// // Online Javascript Editor for free
+// // Write, Edit and Run your Javascript code using JS Online Compiler
+// const order = {
+//     "total": 10000,
+//     "products":[{"product":"67927df747908ab4f63f4f66","quantity":1,"format":"physical","price":100},{"product":"67927df747908ab4f63f4f68","quantity":1,"format":"physical","price":100}],
+//     "status":true,
+//     "paymentHandler":"paystack",
+//     "ref":"854hjdjfd"
+// }
+// const str = JSON.stringify(order, null, 2)
+// console.log(str)
+// const parse = JSON.parse(str)
+// console.log(parse)
 const createUserOrder = async (req, res, next) => {
     try {
         const user = req.user;
@@ -131,6 +144,22 @@ const allCreatorOrderSuborder = async (req, res, next) => {
     }
 };
 exports.allCreatorOrderSuborder = allCreatorOrderSuborder;
+const creatorUpdateSuborder = async (req, res, next) => {
+    try {
+        const orderid = req.query.orderid;
+        const suborderid = req.query.suborderid;
+        const status = req.body.status;
+        const suborder = await (0, order_services_1.updateSubOrderStatus)(orderid, suborderid, status);
+        return res.status(200).json({
+            status: true,
+            suborder
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.creatorUpdateSuborder = creatorUpdateSuborder;
 const handlerWebhook = async (req, res, next) => {
     try {
         const hash = crypto_1.default.createHmac('sha512', process.env.PAYSTACKSECRET).update(JSON.stringify(req.body)).digest('hex');

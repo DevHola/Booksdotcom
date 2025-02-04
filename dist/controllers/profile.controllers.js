@@ -50,10 +50,12 @@ const editUserProfile = async (req, res, next) => {
         const data = {
             biography: biography,
         };
-        if (Array.isArray(req.files) && req.files.length > 0) {
+        if (Array.isArray(req.files)) {
             const urls = await (0, cloudinary_1.cloudinaryImageUploadMethod)(req.files, process.env.PRODUCTPROFILEFOLDER);
             data.imgsrc = urls[0];
         }
+        if (data.imgsrc === undefined || data.imgsrc === '')
+            data.imgsrc = req.body.imgsrc;
         const profile = await (0, profile_services_1.editProfile)(data, id);
         if (profile) {
             return res.status(200).json({

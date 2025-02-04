@@ -199,20 +199,25 @@ const productEdit = async (req, res, next) => {
         });
     }
     try {
+        const data = {};
+        if (Array.isArray(req.files)) {
+            const urls = await (0, cloudinary_1.cloudinaryImageUploadMethod)(req.files, process.env.PRODUCTIMGFOLDER);
+            data.coverImage = urls;
+        }
+        if (data.coverImage === undefined || data.coverImage.length === 0)
+            data.coverImage = req.body.coverImage;
         const productid = req.params.id;
         const { title, description, isbn, language, author, publisher, published_Date, noOfPages } = req.body;
         const user = req.user;
         const id = user.id;
-        const data = {
-            title: title,
-            description: description,
-            ISBN: isbn,
-            author: author,
-            publisher: publisher,
-            published_Date: new Date(published_Date),
-            noOfPages: noOfPages,
-            language: language
-        };
+        data.title = title,
+            data.description = description,
+            data.ISBN = isbn,
+            data.author = author,
+            data.publisher = publisher,
+            data.published_Date = new Date(published_Date),
+            data.noOfPages = noOfPages,
+            data.language = language;
         const product = (0, product_services_1.EditProduct)(id, productid, data);
         return res.status(200).json({
             status: true,
@@ -226,7 +231,6 @@ const productEdit = async (req, res, next) => {
 exports.productEdit = productEdit;
 const search = async (req, res, next) => {
     try {
-        const query = req.query.q || '';
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.page) || 10;
         const filters = {
@@ -263,20 +267,25 @@ const addFormat = async (req, res, next) => {
     }
     try {
         const { type, product, stock, price } = req.body;
-        const data = {};
+        let data = {};
         if (type === 'physical') {
             data.type = type;
             data.price = price;
             data.stock = stock;
             data.product = product;
         }
-        if (type !== 'physical') {
-            if (Array.isArray(req.files) && req.files.length > 0) {
+        else {
+            if (Array.isArray(req.files)) {
                 const urls = await (0, cloudinary_1.cloudinaryImageUploadMethod)(req.files, process.env.PRODUCTFILEDOWNLOADFOLDER);
                 data.downloadLink = urls[0];
                 data.type = type;
                 data.price = price;
                 data.product = product;
+            }
+            else {
+                return res.status(400).json({
+                    message: 'no file uploaded'
+                });
             }
         }
         // if format type exist already 

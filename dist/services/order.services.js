@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.vBS = exports.addOrderCreators = exports.genTrackingCode = exports.webHook = exports.getCreatorSingleOrder = exports.getCreatorOrders = exports.getSingleOrderData = exports.getAuthUserOrder = exports.newSubOrder = exports.createOrder = void 0;
+exports.updateSubOrderStatus = exports.vBS = exports.addOrderCreators = exports.genTrackingCode = exports.webHook = exports.getCreatorSingleOrder = exports.getCreatorOrders = exports.getSingleOrderData = exports.getAuthUserOrder = exports.newSubOrder = exports.createOrder = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const order_model_1 = __importDefault(require("../models/order.model"));
 const suborder_model_1 = __importDefault(require("../models/suborder.model"));
@@ -34,7 +34,7 @@ exports.getAuthUserOrder = getAuthUserOrder;
 const getSingleOrderData = async (id) => {
     return await suborder_model_1.default.find({ orderid: id }, { products: 1 }).populate({
         path: 'products.product',
-        select: 'title coverImage'
+        select: 'title coverImage format'
     }).exec();
 };
 exports.getSingleOrderData = getSingleOrderData;
@@ -119,3 +119,11 @@ const vBS = async (groupProductslist, data) => {
     });
 };
 exports.vBS = vBS;
+const updateSubOrderStatus = async (orderid, suborderid, status) => {
+    const suborder = await suborder_model_1.default.findOneAndUpdate({ orderid: orderid, _id: suborderid }, { status: status }, { new: true });
+    if (!suborder) {
+        throw new Error('Error updating suborder status');
+    }
+    return suborder;
+};
+exports.updateSubOrderStatus = updateSubOrderStatus;

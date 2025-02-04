@@ -225,7 +225,6 @@ export const productEdit = async (req: Request, res: Response, next: NextFunctio
 }
 export const search = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
-        const query = req.query.q || ''
         const page = parseInt(req.query.page as string) || 1
         const limit = parseInt(req.query.page as string) || 10
         const filters = {
