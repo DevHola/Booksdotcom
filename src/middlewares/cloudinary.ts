@@ -2,7 +2,6 @@ import multer from 'multer'
 import {v2 as cloudinary} from 'cloudinary'
 import fs from 'fs'
 import { Request } from 'express';
-
 const multerStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     if(!fs.existsSync('./uploads')) {
@@ -45,8 +44,9 @@ export const cloudinaryImageUploadMethod = async (filesarray: any, foldername: s
         use_filename: true,
         unique_filename: false,
         overwrite: true,
-        folder: foldername
-      };
+        folder: foldername,
+        resource_type: 'auto' as 'auto'
+      } 
     for (const file of files) {
         const data = await cloudinary.uploader.upload(file.path, options)
         fs.unlink(file.path, (err) => {

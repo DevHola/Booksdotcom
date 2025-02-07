@@ -23,6 +23,7 @@ export const couponSchema = new Schema<ICoupon>({
     },
     type: {
         type: String,
+        enum: ['fixed','percentage'],
         required: true
     },
     expiresAt: {
@@ -31,7 +32,7 @@ export const couponSchema = new Schema<ICoupon>({
     },
     isActive: {
         type: Boolean,
-        default: false
+        default: true
     },
     usageCount: {
         type: Number,

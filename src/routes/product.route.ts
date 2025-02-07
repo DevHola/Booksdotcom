@@ -1,11 +1,10 @@
 import express from 'express'
-import { addFormat, addProductPreviewFile, bestBooksByGenre, bestSellersProducts, createProduct, getproductAll, IncreaseStockForPhysicalFormat, newArrivalsProduct, productByAuthor, ProductByCategory, productById, productByIsbn, productByPublisher, productByTitle, productEdit, recentlySoldBooks, removeFormat, search, updateCoverImages, updatePriceFormat } from '../controllers/product.controllers'
+import { addFormat, addProductPreviewFile, bestBooksByGenre, bestSellersProducts, createProduct, getproductAll, IncreaseStockForPhysicalFormat, newArrivalsProduct, productById, productByTitle, productEdit, recentlySoldBooks, removeFormat, search, updateCoverImages, updatePriceFormat } from '../controllers/product.controllers'
 import passport from 'passport'
 import { upload } from '../middlewares/cloudinary';
 import { allCreatorOrder, allCreatorOrderSuborder, createUserOrder, getUserOrder, handlerWebhook, orderSingleData } from '../controllers/order.controllers';
-import { authTokenValidation, createproductValidation, editProductImgValidation, editproductValidation, formatValidation, getProductbyTitleV, orderidqueryValidation, orderidValidation, previewFileValidation, removeformatValidation, StockValidation, updatePriceValidation, validateOrder } from '../middlewares/validation';
+import {  createproductValidation, editProductImgValidation, editproductValidation, formatValidation, getProductbyTitleV, orderidqueryValidation, orderidValidation, previewFileValidation, removeformatValidation, StockValidation, updatePriceValidation, validateCoupon, validateCouponChecker, validateCouponDelete, validateOrder } from '../middlewares/validation';
 import { authorization } from '../middlewares/passport';
-import { checkACoupon, couponDelete, createCoupon, getAllCoupons, getSingleCoupon } from '../controllers/coupon.controllers';
 
 const productRouter = express.Router()
 /**
@@ -926,7 +925,7 @@ productRouter.get('/best/sellers', bestSellersProducts)
 productRouter.get('/recently/sold', recentlySoldBooks)
 // order
 productRouter.post('/order', validateOrder, passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), createUserOrder)
-productRouter.get('/user/order', authTokenValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), getUserOrder)
+productRouter.get('/user/order', passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), getUserOrder)
 /**
  * @swagger
  * /product/order/{id}:
@@ -1043,7 +1042,7 @@ productRouter.get('/order/:id', orderidValidation,  passport.authenticate('jwt',
  *         description: Internal server error
  */
 
-productRouter.get('/creator/orders',authTokenValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), allCreatorOrder)
+productRouter.get('/creator/orders', passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), allCreatorOrder)
 /**
  * @swagger
  * /product/creator/single/order:
@@ -1104,14 +1103,6 @@ productRouter.get('/creator/orders',authTokenValidation, passport.authenticate('
 
 productRouter.get('/creator/single/order',orderidqueryValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), allCreatorOrderSuborder)
 // coupon
-productRouter.post('/coupon', passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), createCoupon)
-productRouter.get('/coupons', passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), getAllCoupons)
-productRouter.get('/coupon/single', passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), getSingleCoupon)
-productRouter.get('/coupon/check', passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), checkACoupon)
-productRouter.delete('/coupon', passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), couponDelete)
-
-
-
 // paystack webhook
 productRouter.post('/webhook/order', handlerWebhook)
 export default productRouter

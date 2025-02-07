@@ -436,6 +436,85 @@ export const getProductbyTitleV =[
     .isString()
     .withMessage('Title must be a string')  
 ]
+//Coupon
+export const validateCoupon = [
+  body("code")
+    .exists({ checkFalsy: true })
+    .withMessage("Coupon code is required")
+    .isString()
+    .withMessage("Coupon code must be string"),
+  body("type")
+    .exists({ checkFalsy: true })
+    .withMessage("Coupon discount type is required")
+    .isIn(["fixed", "percentage"])
+    .withMessage("Type must be either 'fixed' or 'percentage'"),
+  body("expiresAt")
+    .exists({ checkFalsy: true })
+    .withMessage("Coupon expiration date is required")
+    .isISO8601()
+    .toDate()
+    .withMessage("Expiration date must be a valid date"),
+  body("discount")
+    .exists({ checkFalsy: true })
+    .withMessage("Coupon discount is required")
+    .isFloat({ gt: 0 })
+    .withMessage("Discount must be a positive number"),
+  body("ruleType")
+    .exists({ checkFalsy: true })
+    .withMessage("Coupon ruletype is required")
+    .isIn([
+        "none", "month-specific", "day-specific-in-month", "day-specific-in-week", "month-and-day-specific", "month-and-days-of-week-specific", "day-range-specific", "time-period-specific"
+    ])
+    .withMessage("Invalid ruleType value"),
+  body("product")
+    .isArray()
+    .withMessage("Product must be an array of product IDs"),
+  body("rules.limit")
+    .optional()
+    .isInt({ gt: 0 })
+    .withMessage("Limit must be a positive integer"),
+  body("rules.month")
+    .optional()
+    .isArray()
+    .withMessage("Month must be an array"),
+  body("rules.day")
+    .optional()
+    .isArray()
+    .withMessage("Day must be an array of numbers"),
+  body("rules.daysOfWeek")
+    .optional()
+    .isArray()
+    .withMessage("Days of week must be an array of strings"),
+  body("rules.startDate")
+    .optional()
+    .isISO8601()
+    .toDate()
+    .withMessage("Start date must be a valid date"),
+  body("rules.endDate")
+    .optional()
+    .isISO8601()
+    .toDate()
+    .withMessage("End date must be a valid date"),
+]
+export const validateCouponChecker = [
+  query('coupon')
+    .exists({ checkFalsy:true })
+    .withMessage('Coupon code is required')
+    .isString()
+    .withMessage('Coupon code must be a string'),
+  query('coupon')
+    .exists({ checkFalsy:true })
+    .withMessage('Coupon code is required')
+    .isString()
+    .withMessage('Coupon code must be a string')
+]
+export const validateCouponDelete = [
+  query('coupon')
+    .exists({ checkFalsy:true })
+    .withMessage('Coupon code is required')
+    .isString()
+    .withMessage('Coupon code must be a string')
+]
 //Format
 export const formatValidation = [
   header('Authorization')

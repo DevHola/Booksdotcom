@@ -12,6 +12,7 @@ import AuthRouter from './routes/auth.route'
 import categoryRouter from './routes/category.route'
 import productRouter from './routes/product.route'
 import reviewRouter from './routes/review.route'
+import couponRouter from './routes/coupon.route'
 import payRouter from './routes/pay.route'
 import swaggerUi from 'swagger-ui-express'
 import swaggerJsdoc from 'swagger-jsdoc'
@@ -43,6 +44,7 @@ app.use('/api/v1/auth', AuthRouter)
 app.use('/api/v1/category', categoryRouter)
 app.use('/api/v1/products', productRouter)
 app.use('/api/v1/review', reviewRouter)
+app.use('/api/v1/coupons', couponRouter)
 app.use('/api/v1/pay', payRouter)
 const specs = swaggerJsdoc(options);
 app.use(
