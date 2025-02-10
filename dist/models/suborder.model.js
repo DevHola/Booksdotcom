@@ -41,6 +41,9 @@ const OrderProduct = new mongoose_1.Schema({
     quantity: {
         type: Number,
         required: true
+    },
+    coupon: {
+        type: String
     }
 });
 const SubOrderSchema = new mongoose_1.Schema({

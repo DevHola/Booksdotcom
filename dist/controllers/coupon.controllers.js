@@ -2,9 +2,19 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.couponDelete = exports.checkACoupon = exports.getSingleCoupon = exports.getAllCoupons = exports.createCoupon = void 0;
 const coupon_services_1 = require("../services/coupon.services");
+const express_validator_1 = require("express-validator");
+const product_services_1 = require("../services/product.services");
 const createCoupon = async (req, res, next) => {
+    const errors = (0, express_validator_1.validationResult)(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            errors: errors.array()
+        });
+    }
     try {
         const { code, type, expiresAt, discount, ruleType, product, rules } = req.body;
+        const user = req.user;
+        const vendor = user.id;
         const data = {
             code,
             type,
@@ -12,6 +22,7 @@ const createCoupon = async (req, res, next) => {
             expiresAt,
             ruleType,
             product,
+            vendor,
             rules: rules
         };
         const coupon = await (0, coupon_services_1.couponCreation)(data);
@@ -43,8 +54,14 @@ const getAllCoupons = async (req, res, next) => {
 };
 exports.getAllCoupons = getAllCoupons;
 const getSingleCoupon = async (req, res, next) => {
+    const errors = (0, express_validator_1.validationResult)(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            errors: errors.array()
+        });
+    }
     try {
-        const code = req.params.id;
+        const code = req.query.code;
         const coupon = await (0, coupon_services_1.singleCoupon)(code);
         return res.status(200).json({
             status: true,
@@ -67,13 +84,26 @@ const getSingleCoupon = async (req, res, next) => {
 };
 exports.getSingleCoupon = getSingleCoupon;
 const checkACoupon = async (req, res, next) => {
+    const errors = (0, express_validator_1.validationResult)(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            errors: errors.array()
+        });
+    }
     try {
         const couponCode = req.query.coupon;
         const product = req.query.product;
+        let data = [];
         const coupon = await (0, coupon_services_1.checkCoupon)(couponCode, product);
+        const productdata = await (0, product_services_1.getProductById)(product);
+        if (coupon && productdata) {
+            data = await (0, coupon_services_1.processFormatData)(productdata, coupon);
+        }
         return res.status(200).json({
             status: true,
-            coupon
+            valid: true,
+            code: coupon.code,
+            formats: data
         });
     }
     catch (error) {
@@ -81,13 +111,13 @@ const checkACoupon = async (req, res, next) => {
             if (error.message === 'coupon not found')
                 return res.status(404).json({ status: false, message: 'coupon not found' });
             else if (error.message === 'coupon expired')
-                return res.status(400).json({ status: false, message: 'coupon has expired' });
+                return res.status(400).json({ status: false, valid: false, message: 'coupon has expired' });
             else if (error.message === 'coupon is currently inactive')
-                return res.status(400).json({ status: false, message: 'coupon has been disengaged' });
+                return res.status(400).json({ status: false, valid: false, message: 'coupon has been disengaged' });
             else if (error.message === 'coupon is not valid')
-                return res.status(400).json({ status: false, message: 'coupon does not meet criteria' });
+                return res.status(400).json({ status: false, valid: false, message: 'coupon does not meet criteria' });
             else if (error.message === 'Coupon max usage reached')
-                return res.status(409).json({ status: false, message: 'coupon reached max usage' });
+                return res.status(409).json({ status: false, valid: false, message: 'coupon reached max usage' });
             else
                 next(error);
         }
@@ -95,6 +125,12 @@ const checkACoupon = async (req, res, next) => {
 };
 exports.checkACoupon = checkACoupon;
 const couponDelete = async (req, res, next) => {
+    const errors = (0, express_validator_1.validationResult)(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            errors: errors.array()
+        });
+    }
     try {
         const couponCode = req.query.coupon;
         await (0, coupon_services_1.deleteCoupon)(couponCode);

@@ -46,7 +46,8 @@ const cloudinaryImageUploadMethod = async (filesarray, foldername) => {
             use_filename: true,
             unique_filename: false,
             overwrite: true,
-            folder: foldername
+            folder: foldername,
+            resource_type: 'auto'
         };
         for (const file of files) {
             const data = await cloudinary_1.v2.uploader.upload(file.path, options);
