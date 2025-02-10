@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateSubOrderStatus = exports.vBS = exports.addOrderCreators = exports.genTrackingCode = exports.webHook = exports.getCreatorSingleOrder = exports.getCreatorOrders = exports.getSingleOrderData = exports.getAuthUserOrder = exports.newSubOrder = exports.createOrder = void 0;
+exports.updateSubOrderStatus = exports.vBS = exports.addOrderCreators = exports.checkTrackingCode = exports.genTrackingCode = exports.webHook = exports.getCreatorSingleOrder = exports.getCreatorOrders = exports.getSingleOrderData = exports.getAuthUserOrder = exports.newSubOrder = exports.createOrder = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const order_model_1 = __importDefault(require("../models/order.model"));
 const suborder_model_1 = __importDefault(require("../models/suborder.model"));
@@ -15,12 +15,11 @@ const createOrder = async (data, session) => {
 };
 exports.createOrder = createOrder;
 const newSubOrder = async (data, session) => {
-    console.log(data);
     const subOrder = await suborder_model_1.default.create([data], { session });
+    // update coupon usage for each product with coupon
     if (!subOrder) {
         throw new Error('Error creating suborder');
     }
-    console.log(subOrder);
     return subOrder[0];
 };
 exports.newSubOrder = newSubOrder;
@@ -55,18 +54,20 @@ const getCreatorSingleOrder = async (userid, orderid) => {
 };
 exports.getCreatorSingleOrder = getCreatorSingleOrder;
 const webHook = async (data) => {
-    const orderinformation = data.metadata;
-    const newOrder = JSON.parse(orderinformation);
-    const orderExist = await order_model_1.default.findOne({ trackingCode: newOrder.trackingCode });
-    if (orderExist) {
-        throw new Error('tracking code exist');
-    }
-    // need to review this
-    //const order = await createOrder(data)
-    // if(!order){
-    //     throw new Error('Error creating order')
-    // }
-    // return order
+    const deconnstruct = JSON.parse(data.data.metadata.metadata.custom_fields[0].value);
+    const trackingCode = await (0, exports.checkTrackingCode)(deconnstruct.trackingCode);
+    if (trackingCode)
+        throw new Error('tracking code exists');
+    const orderdata = {
+        trackingCode: deconnstruct.trackingCode,
+        user: deconnstruct.user,
+        total: deconnstruct.total,
+        status: true,
+        paymentHandler: 'paystack',
+        ref: data.data.reference
+    };
+    const groupProductslist = await (0, product_services_1.groupProducts)(deconnstruct.products);
+    await (0, exports.vBS)(groupProductslist, orderdata);
 };
 exports.webHook = webHook;
 const genTrackingCode = async (name) => {
@@ -74,6 +75,16 @@ const genTrackingCode = async (name) => {
     return date + '-' + name;
 };
 exports.genTrackingCode = genTrackingCode;
+const checkTrackingCode = async (trackingCode) => {
+    const order = await order_model_1.default.findOne({ trackingCode: trackingCode });
+    if (order) {
+        return true;
+    }
+    else {
+        return false;
+    }
+};
+exports.checkTrackingCode = checkTrackingCode;
 const addOrderCreators = async (orderid, creatorid, session) => {
     const order = await order_model_1.default.updateOne({ _id: orderid }, {
         $push: {

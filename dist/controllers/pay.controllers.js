@@ -10,8 +10,8 @@ const payment = async (req, res, next) => {
         const product = req.body.products;
         const user = await (0, auth_services_1.UserByEmail)(email);
         const orderdata = {
-            id: user._id,
-            amount: (total * 100).toString(),
+            user: user._id,
+            total: (total * 100).toString(),
             trackingCode,
             products: product
         };

@@ -1,11 +1,10 @@
 import express from 'express'
-import { addFormat, addProductPreviewFile, bestBooksByGenre, bestSellersProducts, createProduct, getproductAll, IncreaseStockForPhysicalFormat, newArrivalsProduct, productByAuthor, ProductByCategory, productById, productByIsbn, productByPublisher, productByTitle, productEdit, recentlySoldBooks, removeFormat, search, updateCoverImages, updatePriceFormat } from '../controllers/product.controllers'
+import { addFormat, addProductPreviewFile, bestBooksByGenre, bestSellersProducts, createProduct, getproductAll, IncreaseStockForPhysicalFormat, newArrivalsProduct, productById, productByTitle, productEdit, recentlySoldBooks, removeFormat, search, updateCoverImages, updatePriceFormat } from '../controllers/product.controllers'
 import passport from 'passport'
 import { upload } from '../middlewares/cloudinary';
 import { allCreatorOrder, allCreatorOrderSuborder, createUserOrder, getUserOrder, handlerWebhook, orderSingleData } from '../controllers/order.controllers';
-import { authTokenValidation, createproductValidation, editProductImgValidation, editproductValidation, formatValidation, getProductbyTitleV, orderidqueryValidation, orderidValidation, previewFileValidation, removeformatValidation, StockValidation, updatePriceValidation, validateOrder } from '../middlewares/validation';
+import {  createproductValidation, editProductImgValidation, editproductValidation, formatValidation, getProductbyTitleV, orderidqueryValidation, orderidValidation, previewFileValidation, removeformatValidation, StockValidation, updatePriceValidation, validateCoupon, validateCouponChecker, validateCouponDelete, validateOrder } from '../middlewares/validation';
 import { authorization } from '../middlewares/passport';
-import { checkACoupon, couponDelete, createCoupon, getAllCoupons, getSingleCoupon } from '../controllers/coupon.controllers';
 
 const productRouter = express.Router()
 /**
@@ -233,6 +232,10 @@ productRouter.get('/', getproductAll)
  *                 type: array
  *                 items:
  *                   type: string
+ *               coverImage:
+ *                 type: array
+ *                 items:
+ *                   type: string
  *               publisher:
  *                 type: string
  *               published_Date:
@@ -247,6 +250,7 @@ productRouter.get('/', getproductAll)
  *               - description
  *               - ISBN
  *               - author
+ *               - coverImage
  *               - publisher
  *               - published_Date
  *               - noOfPages
@@ -274,52 +278,52 @@ productRouter.get('/', getproductAll)
  */
 
 productRouter.patch('/:id', upload.array('coverImage', 4), editproductValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}), productEdit)
-/**
- * @swagger
- * /product/edit/coverimage:
- *   patch:
- *     summary: Update cover images for a product
- *     tags: [Product]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               file:
- *                 type: array
- *                 items:
- *                   type: string
- *                   format: binary
- *                 description: Array of images to be uploaded as cover images (max 4 images)
- *     responses:
- *       200:
- *         description: Successfully updated cover images
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 updatedImages:
- *                   type: array
- *                   items:
- *                     type: string
- *                   description: Array of URLs of the updated cover images
- *       400:
- *         description: Invalid request, file upload failed
- *       401:
- *         description: Unauthorized, authentication failed
- *       403:
- *         description: Forbidden, user does not have sufficient permissions
- *       500:
- *         description: Internal server error
- */
-productRouter.patch('/edit/coverimage', editProductImgValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}), upload.array('file',4), updateCoverImages )
+// /**
+//  * @swagger
+//  * /product/edit/coverimage:
+//  *   patch:
+//  *     summary: Update cover images for a product
+//  *     tags: [Product]
+//  *     security:
+//  *       - bearerAuth: []
+//  *     requestBody:
+//  *       required: true
+//  *       content:
+//  *         multipart/form-data:
+//  *           schema:
+//  *             type: object
+//  *             properties:
+//  *               file:
+//  *                 type: array
+//  *                 items:
+//  *                   type: string
+//  *                   format: binary
+//  *                 description: Array of images to be uploaded as cover images (max 4 images)
+//  *     responses:
+//  *       200:
+//  *         description: Successfully updated cover images
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                 updatedImages:
+//  *                   type: array
+//  *                   items:
+//  *                     type: string
+//  *                   description: Array of URLs of the updated cover images
+//  *       400:
+//  *         description: Invalid request, file upload failed
+//  *       401:
+//  *         description: Unauthorized, authentication failed
+//  *       403:
+//  *         description: Forbidden, user does not have sufficient permissions
+//  *       500:
+//  *         description: Internal server error
+//  */
+// productRouter.patch('/edit/coverimage', editProductImgValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}), upload.array('file',4), updateCoverImages )
 /**
  * @swagger
  * /products/search:
@@ -926,7 +930,7 @@ productRouter.get('/best/sellers', bestSellersProducts)
 productRouter.get('/recently/sold', recentlySoldBooks)
 // order
 productRouter.post('/order', validateOrder, passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), createUserOrder)
-productRouter.get('/user/order', authTokenValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), getUserOrder)
+productRouter.get('/user/order', passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), getUserOrder)
 /**
  * @swagger
  * /product/order/{id}:
@@ -1043,7 +1047,7 @@ productRouter.get('/order/:id', orderidValidation,  passport.authenticate('jwt',
  *         description: Internal server error
  */
 
-productRouter.get('/creator/orders',authTokenValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), allCreatorOrder)
+productRouter.get('/creator/orders', passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), allCreatorOrder)
 /**
  * @swagger
  * /product/creator/single/order:
@@ -1104,14 +1108,6 @@ productRouter.get('/creator/orders',authTokenValidation, passport.authenticate('
 
 productRouter.get('/creator/single/order',orderidqueryValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), allCreatorOrderSuborder)
 // coupon
-productRouter.post('/coupon', passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), createCoupon)
-productRouter.get('/coupons', passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), getAllCoupons)
-productRouter.get('/coupon/single', passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), getSingleCoupon)
-productRouter.get('/coupon/check', passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), checkACoupon)
-productRouter.delete('/coupon', passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), couponDelete)
-
-
-
 // paystack webhook
 productRouter.post('/webhook/order', handlerWebhook)
 export default productRouter

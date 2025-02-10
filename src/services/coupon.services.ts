@@ -4,6 +4,7 @@ import ruleModel, { IRules } from "../models/couponrule.model"
 import { removeDiscountStatus, updateDiscountStatus } from "./product.services"
 import moment from "moment"
 import cron from "node-cron"
+import { IProduct } from "../models/product.model"
 interface ICouponResult{
     coupons: []
     currentPage: number
@@ -120,7 +121,21 @@ export const validityCheck = async (coupon: ICoupon, date: any): Promise<{isVali
         default: return { isValid: false, message: "Invalid rule type" }
             
     }
-    
+}
+export const activateCoupon = async (type: "activate", code: string) => {
+    const coupon = await CouponModel.findOne({code: code})
+    if(coupon && coupon.isActive){
+        throw new Error('coupon already active')
+    }
+    const update = await CouponModel.findOneAndUpdate({code: code}, {
+        $set: {
+            isActive: true
+        }
+    }, {new: true})
+    // update product in coupon to true
+
+}
+export const DeactivateCoupon = async (type: "deactivate", code: string) => {
     
 }
 export const deleteCoupon = async (couponCode: string): Promise<void> => {
@@ -129,7 +144,8 @@ export const deleteCoupon = async (couponCode: string): Promise<void> => {
         try {
             await CouponModel.updateOne({code: couponCode}, {
                 $set: {
-                    isDeleted: true
+                    isDeleted: true,
+                    isActive: false
                 }
             }).session(session)
             const coupondata = await CouponModel.findOne({code: couponCode}).session(session) as ICoupon   
@@ -185,6 +201,38 @@ const formatCouponIds = async (coupons:ICoupon[]): Promise<string[]> => {
 const couponCount = async (): Promise<number> => {
     const count = await CouponModel.countDocuments()
     return count
+}
+interface IProcessformat{
+    name: string
+    original_price: string
+    discount: string
+    final_prize: string
+}
+export const processFormatData = async (productdata: IProduct, coupon: ICoupon): Promise< IProcessformat[]> =>{
+    let data: any[] = [] 
+    const formats = productdata.formats
+    for(const format of formats){
+        if(coupon.type === 'fixed'){
+            let detail :IProcessformat = {
+                name: format.type as string,
+                original_price: (format.price).toString() as string,
+                discount:(coupon.discount).toString() as string,
+                final_prize: (Number(format.price) - Number(coupon.discount)).toString() as string
+            }
+            data.push(detail)
+        }else if (coupon.type === 'percentage'){
+            const calculate = (Number(coupon.discount)/100) * Number(format.price)
+            const total = Number(format.price) - calculate
+            let detail = {
+                name: format.type,
+                original_price: format.price,
+                discount:coupon.discount,
+                final_prize: (total).toString()
+            }
+            data.push(detail)
+        }
+    }
+    return data as IProcessformat[]
 }
 
 cron.schedule('0 0 * * *', async () => {    

@@ -32,6 +32,7 @@ exports.couponSchema = new mongoose_1.Schema({
     },
     type: {
         type: String,
+        enum: ['fixed', 'percentage'],
         required: true
     },
     expiresAt: {
@@ -40,7 +41,7 @@ exports.couponSchema = new mongoose_1.Schema({
     },
     isActive: {
         type: Boolean,
-        default: false
+        default: true
     },
     usageCount: {
         type: Number,

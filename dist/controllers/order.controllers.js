@@ -7,6 +7,8 @@ exports.handlerWebhook = exports.creatorUpdateSuborder = exports.allCreatorOrder
 const order_services_1 = require("../services/order.services");
 const crypto_1 = __importDefault(require("crypto"));
 const product_services_1 = require("../services/product.services");
+const paystack_sdk_1 = require("paystack-sdk");
+const paystack = new paystack_sdk_1.Paystack(process.env.PAYSTACKSECRET);
 // // Online Javascript Editor for free
 // // Write, Edit and Run your Javascript code using JS Online Compiler
 // const order = {
@@ -39,8 +41,11 @@ const createUserOrder = async (req, res, next) => {
             ref: ref
         };
         // CREATE ORDER
-        // GROUP PRODUCTS BY USER - returns an object with key as user id and value as array of products
-        const [groupProductslist] = await Promise.all([await (0, product_services_1.groupProducts)(products)]);
+        // GROUP PRODUCTS BY USER - returns an object with key as user id and value as array of products  
+        const [groupProductslist, verify] = await Promise.all([await (0, product_services_1.groupProducts)(products), await paystack.transaction.verify(ref)]);
+        if (verify && verify.data?.status !== 'success') {
+            throw new Error('Payment not successful');
+        }
         const distribute = await (0, order_services_1.vBS)(groupProductslist, data);
         return res.status(200).json({
             status: true,
@@ -52,6 +57,11 @@ const createUserOrder = async (req, res, next) => {
             if (error.message === 'Error in creating order') {
                 return res.status(400).json({
                     message: 'Error in creating order'
+                });
+            }
+            else if (error.message === 'Payment not successful') {
+                return res.status(401).json({
+                    message: 'Payment not successful'
                 });
             }
             else {
@@ -163,16 +173,13 @@ exports.creatorUpdateSuborder = creatorUpdateSuborder;
 const handlerWebhook = async (req, res, next) => {
     try {
         const hash = crypto_1.default.createHmac('sha512', process.env.PAYSTACKSECRET).update(JSON.stringify(req.body)).digest('hex');
-        if (hash == req.headers['x-paystack-signature']) {
+        if (hash === req.headers['x-paystack-signature']) {
             const data = req.body;
+            console.log(data);
             if (data.event === 'charge.success') {
-                // Do something with event
-                const order = await (0, order_services_1.webHook)(data.data);
-                return res.status(200).json({
-                    status: true,
-                    order
-                });
+                await (0, order_services_1.webHook)(data);
             }
+            return res.sendStatus(200);
         }
     }
     catch (error) {

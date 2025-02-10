@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getReviewValidation = exports.getUserReviewsValidation = exports.editReviewValidation = exports.productReviewsValidation = exports.reviewValidation = exports.orderidqueryValidation = exports.orderidValidation = exports.validateOrder = exports.previewFileValidation = exports.updatePriceValidation = exports.StockValidation = exports.removeformatValidation = exports.formatValidation = exports.getProductbyTitleV = exports.editProductImgValidation = exports.editproductValidation = exports.createproductValidation = exports.categoryNameOrIdValidation = exports.categoryValidation = exports.removeAchievementValidation = exports.achievementValidation = exports.profileValidation = exports.preferenceValidation = exports.wishlistValidation = exports.authTokenValidation = exports.initVerifyValidation = exports.assignroleValidation = exports.otpValidation = exports.resetPasswordValidation = exports.verifyValidation = exports.forgetValidation = exports.loginValidation = exports.registerValidation = void 0;
+exports.getReviewValidation = exports.getUserReviewsValidation = exports.editReviewValidation = exports.productReviewsValidation = exports.reviewValidation = exports.orderidqueryValidation = exports.orderidValidation = exports.validateOrder = exports.previewFileValidation = exports.updatePriceValidation = exports.StockValidation = exports.removeformatValidation = exports.formatValidation = exports.validateCouponDelete = exports.validateCouponChecker = exports.validateCoupon = exports.getProductbyTitleV = exports.editProductImgValidation = exports.editproductValidation = exports.createproductValidation = exports.categoryNameOrIdValidation = exports.categoryValidation = exports.removeAchievementValidation = exports.achievementValidation = exports.profileValidation = exports.preferenceValidation = exports.wishlistValidation = exports.authTokenValidation = exports.initVerifyValidation = exports.assignroleValidation = exports.otpValidation = exports.resetPasswordValidation = exports.verifyValidation = exports.forgetValidation = exports.loginValidation = exports.registerValidation = void 0;
 const express_validator_1 = require("express-validator");
 const auth_services_1 = require("../services/auth.services");
 const category_services_1 = require("../services/category.services");
@@ -425,6 +425,85 @@ exports.getProductbyTitleV = [
         .withMessage('Title is required')
         .isString()
         .withMessage('Title must be a string')
+];
+//Coupon
+exports.validateCoupon = [
+    (0, express_validator_1.body)("code")
+        .exists({ checkFalsy: true })
+        .withMessage("Coupon code is required")
+        .isString()
+        .withMessage("Coupon code must be string"),
+    (0, express_validator_1.body)("type")
+        .exists({ checkFalsy: true })
+        .withMessage("Coupon discount type is required")
+        .isIn(["fixed", "percentage"])
+        .withMessage("Type must be either 'fixed' or 'percentage'"),
+    (0, express_validator_1.body)("expiresAt")
+        .exists({ checkFalsy: true })
+        .withMessage("Coupon expiration date is required")
+        .isISO8601()
+        .toDate()
+        .withMessage("Expiration date must be a valid date"),
+    (0, express_validator_1.body)("discount")
+        .exists({ checkFalsy: true })
+        .withMessage("Coupon discount is required")
+        .isFloat({ gt: 0 })
+        .withMessage("Discount must be a positive number"),
+    (0, express_validator_1.body)("ruleType")
+        .exists({ checkFalsy: true })
+        .withMessage("Coupon ruletype is required")
+        .isIn([
+        "none", "month-specific", "day-specific-in-month", "day-specific-in-week", "month-and-day-specific", "month-and-days-of-week-specific", "day-range-specific", "time-period-specific"
+    ])
+        .withMessage("Invalid ruleType value"),
+    (0, express_validator_1.body)("product")
+        .isArray()
+        .withMessage("Product must be an array of product IDs"),
+    (0, express_validator_1.body)("rules.limit")
+        .optional()
+        .isInt({ gt: 0 })
+        .withMessage("Limit must be a positive integer"),
+    (0, express_validator_1.body)("rules.month")
+        .optional()
+        .isArray()
+        .withMessage("Month must be an array"),
+    (0, express_validator_1.body)("rules.day")
+        .optional()
+        .isArray()
+        .withMessage("Day must be an array of numbers"),
+    (0, express_validator_1.body)("rules.daysOfWeek")
+        .optional()
+        .isArray()
+        .withMessage("Days of week must be an array of strings"),
+    (0, express_validator_1.body)("rules.startDate")
+        .optional()
+        .isISO8601()
+        .toDate()
+        .withMessage("Start date must be a valid date"),
+    (0, express_validator_1.body)("rules.endDate")
+        .optional()
+        .isISO8601()
+        .toDate()
+        .withMessage("End date must be a valid date"),
+];
+exports.validateCouponChecker = [
+    (0, express_validator_1.query)('coupon')
+        .exists({ checkFalsy: true })
+        .withMessage('Coupon code is required')
+        .isString()
+        .withMessage('Coupon code must be a string'),
+    (0, express_validator_1.query)('coupon')
+        .exists({ checkFalsy: true })
+        .withMessage('Coupon code is required')
+        .isString()
+        .withMessage('Coupon code must be a string')
+];
+exports.validateCouponDelete = [
+    (0, express_validator_1.query)('coupon')
+        .exists({ checkFalsy: true })
+        .withMessage('Coupon code is required')
+        .isString()
+        .withMessage('Coupon code must be a string')
 ];
 //Format
 exports.formatValidation = [

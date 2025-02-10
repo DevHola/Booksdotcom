@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.expiredCouponDeletion = exports.deleteCoupon = exports.validityCheck = exports.checkCoupon = exports.singleCoupon = exports.getAllCreatorCoupons = exports.structureSubOrder = exports.data = exports.couponCreation = void 0;
+exports.processFormatData = exports.expiredCouponDeletion = exports.deleteCoupon = exports.DeactivateCoupon = exports.activateCoupon = exports.validityCheck = exports.checkCoupon = exports.singleCoupon = exports.getAllCreatorCoupons = exports.structureSubOrder = exports.data = exports.couponCreation = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const coupon_model_1 = __importDefault(require("../models/coupon.model"));
 const couponrule_model_1 = __importDefault(require("../models/couponrule.model"));
@@ -123,13 +123,30 @@ const validityCheck = async (coupon, date) => {
     }
 };
 exports.validityCheck = validityCheck;
+const activateCoupon = async (type, code) => {
+    const coupon = await coupon_model_1.default.findOne({ code: code });
+    if (coupon && coupon.isActive) {
+        throw new Error('coupon already active');
+    }
+    const update = await coupon_model_1.default.findOneAndUpdate({ code: code }, {
+        $set: {
+            isActive: true
+        }
+    }, { new: true });
+    // update product in coupon to true
+};
+exports.activateCoupon = activateCoupon;
+const DeactivateCoupon = async (type, code) => {
+};
+exports.DeactivateCoupon = DeactivateCoupon;
 const deleteCoupon = async (couponCode) => {
     const session = await mongoose_1.default.startSession();
     return session.withTransaction(async () => {
         try {
             await coupon_model_1.default.updateOne({ code: couponCode }, {
                 $set: {
-                    isDeleted: true
+                    isDeleted: true,
+                    isActive: false
                 }
             }).session(session);
             const coupondata = await coupon_model_1.default.findOne({ code: couponCode }).session(session);
@@ -186,6 +203,34 @@ const couponCount = async () => {
     const count = await coupon_model_1.default.countDocuments();
     return count;
 };
+const processFormatData = async (productdata, coupon) => {
+    let data = [];
+    const formats = productdata.formats;
+    for (const format of formats) {
+        if (coupon.type === 'fixed') {
+            let detail = {
+                name: format.type,
+                original_price: (format.price).toString(),
+                discount: (coupon.discount).toString(),
+                final_prize: (Number(format.price) - Number(coupon.discount)).toString()
+            };
+            data.push(detail);
+        }
+        else if (coupon.type === 'percentage') {
+            const calculate = (Number(coupon.discount) / 100) * Number(format.price);
+            const total = Number(format.price) - calculate;
+            let detail = {
+                name: format.type,
+                original_price: format.price,
+                discount: coupon.discount,
+                final_prize: (total).toString()
+            };
+            data.push(detail);
+        }
+    }
+    return data;
+};
+exports.processFormatData = processFormatData;
 node_cron_1.default.schedule('0 0 * * *', async () => {
     const count = await couponCount();
     if (count > 0)

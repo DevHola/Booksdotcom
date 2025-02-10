@@ -1,10 +1,12 @@
 import { Request, Response, NextFunction } from "express";
-import { createOrder, genTrackingCode, getAuthUserOrder, getCreatorOrders, getCreatorSingleOrder, getSingleOrderData, IOrderSearchResult, updateSubOrderStatus, vBS, webHook } from "../services/order.services";
+import { checkTrackingCode, genTrackingCode, getAuthUserOrder, getCreatorOrders, getCreatorSingleOrder, getSingleOrderData, IOrderSearchResult, updateSubOrderStatus, vBS, webHook } from "../services/order.services";
 import { DecodedToken } from "../middlewares/passport";
 import { IOrder } from "../models/order.model";
 import crypto from 'crypto'
 import { groupProducts, IProductDefuse } from "../services/product.services";
 import { IOrderProduct } from "../models/suborder.model";
+import {Paystack} from 'paystack-sdk';
+const paystack = new Paystack(process.env.PAYSTACKSECRET as string);
 
 // // Online Javascript Editor for free
 // // Write, Edit and Run your Javascript code using JS Online Compiler
@@ -40,8 +42,11 @@ export const createUserOrder = async (req: Request, res: Response, next: NextFun
             ref: ref as string
         }
         // CREATE ORDER
-        // GROUP PRODUCTS BY USER - returns an object with key as user id and value as array of products
-        const [groupProductslist] = await Promise.all([await groupProducts(products)])
+        // GROUP PRODUCTS BY USER - returns an object with key as user id and value as array of products  
+        const [groupProductslist, verify] = await Promise.all([await groupProducts(products), await paystack.transaction.verify(ref)])
+        if(verify && verify.data?.status !== 'success'){
+            throw new Error('Payment not successful')
+        }
         const distribute = await vBS(groupProductslist, data as IOrder)        
         return res.status(200).json({
             status: true,
@@ -53,7 +58,12 @@ export const createUserOrder = async (req: Request, res: Response, next: NextFun
                 return res.status(400).json({
                     message: 'Error in creating order'
                 })
-            } else {
+            } else if (error.message === 'Payment not successful'){
+                return res.status(401).json({
+                    message: 'Payment not successful'
+                })
+            }
+             else {
                 next(error)
             }
         }
@@ -154,16 +164,13 @@ export const creatorUpdateSuborder = async (req: Request, res: Response, next: N
 export const handlerWebhook = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const hash = crypto.createHmac('sha512', process.env.PAYSTACKSECRET as string).update(JSON.stringify(req.body)).digest('hex');
-        if (hash == req.headers['x-paystack-signature']) {
+        if (hash === req.headers['x-paystack-signature']) {
         const data = req.body;
+        console.log(data)
         if(data.event === 'charge.success') {
-        // Do something with event
-        const order = await webHook(data.data)
-        return res.status(200).json({
-            status: true,
-            order
-        })
+        await webHook(data)
         }
+        return res.sendStatus(200)
     }
         
         
