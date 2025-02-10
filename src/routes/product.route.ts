@@ -232,6 +232,10 @@ productRouter.get('/', getproductAll)
  *                 type: array
  *                 items:
  *                   type: string
+ *               coverImage:
+ *                 type: array
+ *                 items:
+ *                   type: string
  *               publisher:
  *                 type: string
  *               published_Date:
@@ -246,6 +250,7 @@ productRouter.get('/', getproductAll)
  *               - description
  *               - ISBN
  *               - author
+ *               - coverImage
  *               - publisher
  *               - published_Date
  *               - noOfPages
@@ -273,52 +278,52 @@ productRouter.get('/', getproductAll)
  */
 
 productRouter.patch('/:id', upload.array('coverImage', 4), editproductValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}), productEdit)
-/**
- * @swagger
- * /product/edit/coverimage:
- *   patch:
- *     summary: Update cover images for a product
- *     tags: [Product]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               file:
- *                 type: array
- *                 items:
- *                   type: string
- *                   format: binary
- *                 description: Array of images to be uploaded as cover images (max 4 images)
- *     responses:
- *       200:
- *         description: Successfully updated cover images
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 updatedImages:
- *                   type: array
- *                   items:
- *                     type: string
- *                   description: Array of URLs of the updated cover images
- *       400:
- *         description: Invalid request, file upload failed
- *       401:
- *         description: Unauthorized, authentication failed
- *       403:
- *         description: Forbidden, user does not have sufficient permissions
- *       500:
- *         description: Internal server error
- */
-productRouter.patch('/edit/coverimage', editProductImgValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}), upload.array('file',4), updateCoverImages )
+// /**
+//  * @swagger
+//  * /product/edit/coverimage:
+//  *   patch:
+//  *     summary: Update cover images for a product
+//  *     tags: [Product]
+//  *     security:
+//  *       - bearerAuth: []
+//  *     requestBody:
+//  *       required: true
+//  *       content:
+//  *         multipart/form-data:
+//  *           schema:
+//  *             type: object
+//  *             properties:
+//  *               file:
+//  *                 type: array
+//  *                 items:
+//  *                   type: string
+//  *                   format: binary
+//  *                 description: Array of images to be uploaded as cover images (max 4 images)
+//  *     responses:
+//  *       200:
+//  *         description: Successfully updated cover images
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                 updatedImages:
+//  *                   type: array
+//  *                   items:
+//  *                     type: string
+//  *                   description: Array of URLs of the updated cover images
+//  *       400:
+//  *         description: Invalid request, file upload failed
+//  *       401:
+//  *         description: Unauthorized, authentication failed
+//  *       403:
+//  *         description: Forbidden, user does not have sufficient permissions
+//  *       500:
+//  *         description: Internal server error
+//  */
+// productRouter.patch('/edit/coverimage', editProductImgValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator','admin']}), upload.array('file',4), updateCoverImages )
 /**
  * @swagger
  * /products/search:

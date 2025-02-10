@@ -308,7 +308,7 @@ AuthRouter.get('/', (req, res) => {
 /**
  * @swagger
  * /auth/google:
- *   patch:
+ *   get:
  *     summary: Google OAuth authentication
  *     tags: [User]
  *     requestBody:
@@ -607,7 +607,7 @@ AuthRouter.post('/author/profile', upload.array('img',1), profileValidation, pas
  *       401:
  *         description: Unauthorized
  */
-AuthRouter.patch('/author/profile/edit', upload.array('imgsrc',1) ,passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), editUserProfile)
+AuthRouter.patch('/author/profile/edit', upload.array('img',1) ,passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), editUserProfile)
 /**
  * @swagger
  * /auth/author/profile:

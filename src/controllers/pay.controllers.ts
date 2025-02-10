@@ -9,8 +9,8 @@ export const payment = async (req: Request, res: Response, next: NextFunction): 
         const product = req.body.products as IProductDefuse
         const user = await UserByEmail(email)
         const orderdata : any = {
-            id: user._id,
-            amount: (total * 100).toString(),
+            user: user._id,
+            total: (total * 100).toString(),
             trackingCode,
             products: product
         }           

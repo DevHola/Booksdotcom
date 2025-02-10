@@ -31,6 +31,7 @@ export interface IProductFilter {
     quantity: number,
     format: string,
     price: number
+    coupon: string
 }
 export interface POA {
     products: IProductDefuse[],

@@ -5,6 +5,7 @@ export interface IOrderProduct extends Document {
     format: String
     price: Number
     quantity: Number
+    coupon: String
 }
 const OrderProduct = new Schema<IOrderProduct>({
     product: {
@@ -23,6 +24,9 @@ const OrderProduct = new Schema<IOrderProduct>({
       quantity: {
         type: Number,
         required: true
+      },
+      coupon: {
+        type: String
       }
 })
 export interface ISubOrder extends Document { 

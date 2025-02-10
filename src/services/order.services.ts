@@ -2,7 +2,7 @@ import mongoose, { ClientSession } from "mongoose"
 import OrderModel, { IOrder } from "../models/order.model"
 import SubOrderModel, { IOrderProduct, ISubOrder } from "../models/suborder.model"
 import { creditAuthorAccount } from "./auth.services"
-import { IProductDefuse, updateStockOrderInitiation } from "./product.services"
+import { groupProducts, IProductDefuse, updateStockOrderInitiation } from "./product.services"
 export interface ISearchQueries {
     trackingCode?: string
     user?: string
@@ -20,12 +20,11 @@ export const createOrder = async (data:IOrder, session: ClientSession): Promise<
      return order[0] as IOrder
 }
 export const newSubOrder = async (data:ISubOrder, session: ClientSession): Promise<ISubOrder> => {
-    console.log(data)
     const subOrder = await SubOrderModel.create([data], {session})
+    // update coupon usage for each product with coupon
     if(!subOrder){
         throw new Error('Error creating suborder')
     }
-    console.log(subOrder)
     return subOrder[0] as ISubOrder
 }
 export const getAuthUserOrder = async (userid: string, page: number, limit: number): Promise<IOrderSearchResult> => {
@@ -54,24 +53,33 @@ export const getCreatorSingleOrder = async (userid:string, orderid: string): Pro
         select:'title coverImage'
     })
 }
-export const webHook = async (data: any) => {
-    const orderinformation = data.metadata
-    const newOrder = JSON.parse(orderinformation) 
-    const orderExist = await OrderModel.findOne({ trackingCode: newOrder.trackingCode })
-    if(orderExist){
-        throw new Error('tracking code exist')
-    }
-    // need to review this
-    //const order = await createOrder(data)
-    // if(!order){
-    //     throw new Error('Error creating order')
-    // }
-    // return order
+export const webHook = async (data: any): Promise<void> => {
+    const deconnstruct = JSON.parse(data.data.metadata.metadata.custom_fields[0].value)
+    const trackingCode = await checkTrackingCode(deconnstruct.trackingCode)
+        if(trackingCode) throw new Error('tracking code exists')
+        const orderdata: Partial<IOrder> =  {
+            trackingCode: deconnstruct.trackingCode as string,
+            user: deconnstruct.user as string,
+            total: deconnstruct.total as number,
+            status: true as boolean,
+            paymentHandler: 'paystack' as string,
+            ref: data.data.reference as string
+        }
+        const groupProductslist = await groupProducts(deconnstruct.products)
+        await vBS(groupProductslist, orderdata as IOrder)        
 }
 export const genTrackingCode = async (name: string): Promise<string> => { 
     const date = Date.now()
     return date + '-' + name
 }
+export const checkTrackingCode = async (trackingCode: string): Promise<boolean> => {    
+    const order = await OrderModel.findOne({trackingCode: trackingCode})    
+    if(order){
+        return true
+    } else{
+        return false
+    }
+} 
 export const addOrderCreators = async (orderid: string, creatorid: string, session: ClientSession) => {
     const order = await OrderModel.updateOne({_id: orderid}, {
         $push: {

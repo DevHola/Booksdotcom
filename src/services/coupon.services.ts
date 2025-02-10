@@ -74,8 +74,6 @@ export const getAllCreatorCoupons = async (vendorid: string, page: number, limit
     const [coupons, totalResult] = await Promise.all([await CouponModel.find({vendor: vendorid, isDeleted: false}).sort({createdAt: -1}).skip((page - 1) * limit).limit(limit).lean(),
         await CouponModel.find({vendor:vendorid, isDeleted: false}).countDocuments()
     ])
-    console.log(coupons)
-    console.log(totalResult)
     return {coupons, currentPage: page, totalPage: Math.ceil(totalResult/limit), totalResult } as ICouponResult       
 }
 export const singleCoupon = async (couponCode:string): Promise<ICoupon> => {
@@ -123,7 +121,21 @@ export const validityCheck = async (coupon: ICoupon, date: any): Promise<{isVali
         default: return { isValid: false, message: "Invalid rule type" }
             
     }
-    
+}
+export const activateCoupon = async (type: "activate", code: string) => {
+    const coupon = await CouponModel.findOne({code: code})
+    if(coupon && coupon.isActive){
+        throw new Error('coupon already active')
+    }
+    const update = await CouponModel.findOneAndUpdate({code: code}, {
+        $set: {
+            isActive: true
+        }
+    }, {new: true})
+    // update product in coupon to true
+
+}
+export const DeactivateCoupon = async (type: "deactivate", code: string) => {
     
 }
 export const deleteCoupon = async (couponCode: string): Promise<void> => {

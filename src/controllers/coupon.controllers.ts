@@ -43,7 +43,6 @@ export const getAllCoupons = async (req:Request, res:Response, next:NextFunction
         const limit = parseInt(req.query.limit as string) || 10
         const user = req.user as DecodedToken
         const userid = user.id
-        console.log(userid)
         const coupons = await getAllCreatorCoupons(userid, page, limit)
         return res.status(200).json({
             status: true,
