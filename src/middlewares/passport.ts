@@ -52,7 +52,7 @@ if (!clientSecret) {
 export const GGstrategy =  new GoogleStrategy({
     clientID,
     clientSecret,
-    callbackURL: "http://localhost:8000/api/auth/google/callback",
+    callbackURL: process.env.CALLBACKURL as string,
     passReqToCallback   : true
 
 }, async function( request, accessToken, refreshToken, profile: any, done){
