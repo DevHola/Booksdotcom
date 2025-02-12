@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.processFormatData = exports.expiredCouponDeletion = exports.deleteCoupon = exports.DeactivateCoupon = exports.activateCoupon = exports.validityCheck = exports.checkCoupon = exports.singleCoupon = exports.getAllCreatorCoupons = exports.structureSubOrder = exports.data = exports.couponCreation = void 0;
+exports.processFormatData = exports.expiredCouponDeletion = exports.updateCouponUsage = exports.deleteCoupon = exports.aDCouponStatus = exports.validityCheck = exports.checkCoupon = exports.singleCoupon = exports.getAllCreatorCoupons = exports.structureSubOrder = exports.data = exports.couponCreation = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const coupon_model_1 = __importDefault(require("../models/coupon.model"));
 const couponrule_model_1 = __importDefault(require("../models/couponrule.model"));
@@ -15,7 +15,7 @@ const couponCreation = async (data) => {
     return session.withTransaction(async () => {
         try {
             const coupon = await newCoupon(data, session);
-            await (0, product_services_1.updateDiscountStatus)(data.product, session);
+            await (0, product_services_1.updateDiscountStatus)(data.product, true, session);
             if (data.ruleType !== 'none' && data.rules && coupon) {
                 const refined = await (0, exports.structureSubOrder)(data.rules, data.ruleType, coupon._id);
                 const rules = await newRules(refined, session);
@@ -123,22 +123,33 @@ const validityCheck = async (coupon, date) => {
     }
 };
 exports.validityCheck = validityCheck;
-const activateCoupon = async (type, code) => {
+const aDCouponStatus = async (type, code) => {
     const coupon = await coupon_model_1.default.findOne({ code: code });
-    if (coupon && coupon.isActive) {
-        throw new Error('coupon already active');
+    if (coupon && coupon.isActive === type) {
+        throw new Error('coupon status set already');
     }
-    const update = await coupon_model_1.default.findOneAndUpdate({ code: code }, {
-        $set: {
-            isActive: true
+    const session = await mongoose_1.default.startSession();
+    return session.withTransaction(async () => {
+        try {
+            const update = await coupon_model_1.default.findOneAndUpdate({ code: code }, {
+                $set: {
+                    isActive: type
+                }
+            }, { new: true }).session(session);
+            if (type === true) {
+                await (0, product_services_1.updateDiscountStatus)(coupon?.product, true, session);
+            }
+            else {
+                await (0, product_services_1.updateDiscountStatus)(coupon?.product, false, session);
+            }
+            return update;
         }
-    }, { new: true });
-    // update product in coupon to true
+        catch (error) {
+            throw new Error('error updating coupon status');
+        }
+    }).finally(() => session.endSession());
 };
-exports.activateCoupon = activateCoupon;
-const DeactivateCoupon = async (type, code) => {
-};
-exports.DeactivateCoupon = DeactivateCoupon;
+exports.aDCouponStatus = aDCouponStatus;
 const deleteCoupon = async (couponCode) => {
     const session = await mongoose_1.default.startSession();
     return session.withTransaction(async () => {
@@ -150,7 +161,7 @@ const deleteCoupon = async (couponCode) => {
                 }
             }).session(session);
             const coupondata = await coupon_model_1.default.findOne({ code: couponCode }).session(session);
-            await (0, product_services_1.removeDiscountStatus)(coupondata.product, false, session);
+            await (0, product_services_1.updateDiscountStatus)(coupondata.product, false, session);
         }
         catch (error) {
             throw new Error('error deleting coupon');
@@ -159,6 +170,14 @@ const deleteCoupon = async (couponCode) => {
         .finally(() => session.endSession());
 };
 exports.deleteCoupon = deleteCoupon;
+const updateCouponUsage = async (code, session) => {
+    return await coupon_model_1.default.findOneAndUpdate({ code: code }, {
+        $inc: {
+            usageCount: 1
+        }
+    }, { new: true }).session(session);
+};
+exports.updateCouponUsage = updateCouponUsage;
 const expiredCouponDeletion = async (data) => {
     const session = await mongoose_1.default.startSession();
     return session.withTransaction(async () => {
@@ -176,7 +195,7 @@ const expiredCouponDeletion = async (data) => {
                     $set: {
                         isActive: false
                     }
-                }).session(session), await (0, product_services_1.removeDiscountStatus)(couponProducts, false, session)]);
+                }).session(session), await (0, product_services_1.updateDiscountStatus)(couponProducts, false, session)]);
         }
         catch (error) {
             console.log(error);

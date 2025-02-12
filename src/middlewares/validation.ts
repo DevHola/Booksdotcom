@@ -1,7 +1,6 @@
 import { body, header, query, param } from 'express-validator'
 import { UserByEmail, UserExist, nameExist } from '../services/auth.services';
 import { getCategoryByName } from '../services/category.services';
-import { checkTypeExist } from '../services/format.services';
 import mime from 'mime-types';
 export const registerValidation = [
   body('name')
@@ -657,7 +656,45 @@ export const previewFileValidation = [
       return true
     })
 ]
-//Order
+export const validatePayment = [
+  body("total")
+    .isNumeric()
+    .withMessage("Total must be a number")
+    .isInt({ min: 100 })
+    .withMessage("Total amount must be at least 100"),
+  
+  body("products")
+    .isArray({ min: 1 })
+    .withMessage("Products must be an array with at least one item"),
+
+  body("products.*.product")
+    .isString()
+    .withMessage("Product ID must be a string"),
+
+  body("products.*.quantity")
+    .isInt({ min: 1 })
+    .withMessage("Quantity must be at least 1"),
+
+  body("products.*.format")
+    .isString()
+    .isIn(["physical", "ebook", "audiobook"])
+    .withMessage("Format must be either 'physical' or 'digital(ebook/audiobook)'"),
+
+  body("products.*.price")
+    .isNumeric()
+    .withMessage("Price must be a number")
+    .isFloat({ min: 0 })
+    .withMessage("Price must be a positive number"),
+
+  body("email")
+    .isEmail()
+    .withMessage("Invalid email address"),
+
+  body("trackingCode")
+    .isString()
+    .notEmpty()
+    .withMessage("Tracking code is required"),
+];
 
 export const validateOrder = [
   body('total')

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getReviewValidation = exports.getUserReviewsValidation = exports.editReviewValidation = exports.productReviewsValidation = exports.reviewValidation = exports.orderidqueryValidation = exports.orderidValidation = exports.validateOrder = exports.previewFileValidation = exports.updatePriceValidation = exports.StockValidation = exports.removeformatValidation = exports.formatValidation = exports.validateCouponDelete = exports.validateCouponChecker = exports.validateCoupon = exports.getProductbyTitleV = exports.editProductImgValidation = exports.editproductValidation = exports.createproductValidation = exports.categoryNameOrIdValidation = exports.categoryValidation = exports.removeAchievementValidation = exports.achievementValidation = exports.profileValidation = exports.preferenceValidation = exports.wishlistValidation = exports.authTokenValidation = exports.initVerifyValidation = exports.assignroleValidation = exports.otpValidation = exports.resetPasswordValidation = exports.verifyValidation = exports.forgetValidation = exports.loginValidation = exports.registerValidation = void 0;
+exports.getReviewValidation = exports.getUserReviewsValidation = exports.editReviewValidation = exports.productReviewsValidation = exports.reviewValidation = exports.orderidqueryValidation = exports.orderidValidation = exports.validateOrder = exports.validatePayment = exports.previewFileValidation = exports.updatePriceValidation = exports.StockValidation = exports.removeformatValidation = exports.formatValidation = exports.validateCouponDelete = exports.validateCouponChecker = exports.validateCoupon = exports.getProductbyTitleV = exports.editProductImgValidation = exports.editproductValidation = exports.createproductValidation = exports.categoryNameOrIdValidation = exports.categoryValidation = exports.removeAchievementValidation = exports.achievementValidation = exports.profileValidation = exports.preferenceValidation = exports.wishlistValidation = exports.authTokenValidation = exports.initVerifyValidation = exports.assignroleValidation = exports.otpValidation = exports.resetPasswordValidation = exports.verifyValidation = exports.forgetValidation = exports.loginValidation = exports.registerValidation = void 0;
 const express_validator_1 = require("express-validator");
 const auth_services_1 = require("../services/auth.services");
 const category_services_1 = require("../services/category.services");
@@ -646,7 +646,38 @@ exports.previewFileValidation = [
         return true;
     })
 ];
-//Order
+exports.validatePayment = [
+    (0, express_validator_1.body)("total")
+        .isNumeric()
+        .withMessage("Total must be a number")
+        .isInt({ min: 100 })
+        .withMessage("Total amount must be at least 100"),
+    (0, express_validator_1.body)("products")
+        .isArray({ min: 1 })
+        .withMessage("Products must be an array with at least one item"),
+    (0, express_validator_1.body)("products.*.product")
+        .isString()
+        .withMessage("Product ID must be a string"),
+    (0, express_validator_1.body)("products.*.quantity")
+        .isInt({ min: 1 })
+        .withMessage("Quantity must be at least 1"),
+    (0, express_validator_1.body)("products.*.format")
+        .isString()
+        .isIn(["physical", "ebook", "audiobook"])
+        .withMessage("Format must be either 'physical' or 'digital(ebook/audiobook)'"),
+    (0, express_validator_1.body)("products.*.price")
+        .isNumeric()
+        .withMessage("Price must be a number")
+        .isFloat({ min: 0 })
+        .withMessage("Price must be a positive number"),
+    (0, express_validator_1.body)("email")
+        .isEmail()
+        .withMessage("Invalid email address"),
+    (0, express_validator_1.body)("trackingCode")
+        .isString()
+        .notEmpty()
+        .withMessage("Tracking code is required"),
+];
 exports.validateOrder = [
     (0, express_validator_1.body)('total')
         .exists({ checkFalsy: true }).withMessage('Total is required')

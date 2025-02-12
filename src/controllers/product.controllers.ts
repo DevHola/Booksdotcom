@@ -1,6 +1,6 @@
 import { Request,Response, NextFunction } from "express";
 import { validationResult } from "express-validator";
-import { addPreviewFile, bestBooksFromGenre, bestSellers, EditProduct, getAllProduct, getProductById, getProductByIsbn, getProductByTitle, getProductsByAuthor, getProductsByCategory, getProductsByPublisher, IProductFilter, ISearchResult, newArrivals, newProduct, recentlySold, searchProducts, updateCoverImgs } from "../services/product.services";
+import { addPreviewFile, bestBooksFromGenre, bestSellers, EditProduct, getAllProduct, getProductById, getProductByIsbn, getProductByTitle, getProductsByAuthor, getProductsByCategory, getProductsByPublisher, IProductFilter, ISearchResult, newArrivals, newProduct, recentlySold, recommender, searchProducts, updateCoverImgs } from "../services/product.services";
 import { DecodedToken } from "../middlewares/passport";
 import { addFormatToProduct, removeFormatFromProduct, updateFormatPrice, updateStockInProduct } from "../services/format.services";
 import { cloudinaryImageUploadMethod } from "../middlewares/cloudinary";
@@ -514,4 +514,25 @@ export const updateCoverImages = async (req: Request, res: Response, next: NextF
         }
     }
     
+}
+export const userRecommendation = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    try {
+        const user = req.user as DecodedToken
+        const id = user.id as string
+        const products = await recommender(id)
+        return res.status(200).json({
+            status: true,
+            recommendations: products
+        })
+        
+    } catch (error) {
+        if(error instanceof Error){
+            if(error.message === 'user not found'){
+                return res.status(401).json({
+                    status: false,
+                    message: 'unauthorized'
+                })
+            }
+        }
+    }
 }

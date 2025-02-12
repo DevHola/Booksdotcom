@@ -1,5 +1,5 @@
 import express from 'express'
-import { addFormat, addProductPreviewFile, bestBooksByGenre, bestSellersProducts, createProduct, getproductAll, IncreaseStockForPhysicalFormat, newArrivalsProduct, productById, productByTitle, productEdit, recentlySoldBooks, removeFormat, search, updateCoverImages, updatePriceFormat } from '../controllers/product.controllers'
+import { addFormat, addProductPreviewFile, bestBooksByGenre, bestSellersProducts, createProduct, getproductAll, IncreaseStockForPhysicalFormat, newArrivalsProduct, productById, productByTitle, productEdit, recentlySoldBooks, removeFormat, search, updateCoverImages, updatePriceFormat, userRecommendation } from '../controllers/product.controllers'
 import passport from 'passport'
 import { upload } from '../middlewares/cloudinary';
 import { allCreatorOrder, allCreatorOrderSuborder, createUserOrder, getUserOrder, handlerWebhook, orderSingleData } from '../controllers/order.controllers';
@@ -929,7 +929,139 @@ productRouter.get('/best/sellers', bestSellersProducts)
  */
 productRouter.get('/recently/sold', recentlySoldBooks)
 // order
+/**
+ * @swagger
+ * /order:
+ *   post:
+ *     summary: Create a new order
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               total:
+ *                 type: number
+ *                 example: 10000
+ *               products:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     product:
+ *                       type: string
+ *                       example: "67927df747908ab4f63f4f66"
+ *                     quantity:
+ *                       type: integer
+ *                       example: 1
+ *                     format:
+ *                       type: string
+ *                       example: "physical"
+ *                     price:
+ *                       type: number
+ *                       example: 100
+ *               status:
+ *                 type: boolean
+ *                 example: true
+ *               paymentHandler:
+ *                 type: string
+ *                 example: "paystack"
+ *               ref:
+ *                 type: string
+ *                 example: "854hjdjfd"
+ *     responses:
+ *       200:
+ *         description: Order successfully created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 distribute:
+ *                   type: object
+ *                   description: Order distribution details
+ *       400:
+ *         description: Error in creating order
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Error in creating order"
+ *       500:
+ *         description: Internal server error
+ */
+
 productRouter.post('/order', validateOrder, passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), createUserOrder)
+/**
+ * @swagger
+ * /product/user/order:
+ *   get:
+ *     summary: Get all orders for the normal users with pagination
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: Page number for pagination
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: Number of orders per page for pagination
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved orders for the creator
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 orders:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       orderId:
+ *                         type: string
+ *                         example: "60b8d7d1a24f1a001f9f53b2"
+ *                       totalAmount:
+ *                         type: number
+ *                         example: 150.0
+ *                       orderStatus:
+ *                         type: string
+ *                         example: "pending"
+ *                       orderDate:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-01-30T14:00:00Z"
+ *       401:
+ *         description: Unauthorized, user authentication failed
+ *       403:
+ *         description: Forbidden, user does not have sufficient permissions
+ *       500:
+ *         description: Internal server error
+ */
+
 productRouter.get('/user/order', passport.authenticate('jwt', { session: false }), authorization({role: ['user']}), getUserOrder)
 /**
  * @swagger
@@ -1107,7 +1239,57 @@ productRouter.get('/creator/orders', passport.authenticate('jwt', { session: fal
  */
 
 productRouter.get('/creator/single/order',orderidqueryValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), allCreatorOrderSuborder)
-// coupon
 // paystack webhook
 productRouter.post('/webhook/order', handlerWebhook)
+/**
+ * @swagger
+ * /product/recommendations:
+ *   get:
+ *     summary: Get product recommendations for the user
+ *     tags: [Product]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         description: Bearer token for authentication
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved product recommendations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 recommendations:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         example: "60b8d7d1a24f1a001f9f53b2"
+ *                       title:
+ *                         type: string
+ *                         example: "Wireless Headphones"
+ *                       coverImage:
+ *                         type: array
+ *                       averageRating:
+ *                         type: number
+ *                         example: 4.5
+ *       401:
+ *         description: Unauthorized, invalid or missing token
+ *       403:
+ *         description: Forbidden, user does not have sufficient permissions
+ *       500:
+ *         description: Internal server error
+ */
+
+productRouter.get('/recommendations', passport.authenticate('jwt', { session: false }), authorization({role: ['user']}),  userRecommendation)
 export default productRouter

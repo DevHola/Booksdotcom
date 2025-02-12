@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { checkCoupon, couponCreation, deleteCoupon, getAllCreatorCoupons, processFormatData, singleCoupon } from "../services/coupon.services";
+import { aDCouponStatus, checkCoupon, couponCreation, deleteCoupon, getAllCreatorCoupons, processFormatData, singleCoupon } from "../services/coupon.services";
 import { DecodedToken } from "../middlewares/passport";
 import { ICoupon } from "../models/coupon.model";
 import { IRules } from "../models/couponrule.model";
@@ -133,4 +133,37 @@ export const couponDelete = async (req:Request, res:Response, next:NextFunction)
     } catch (error) {
         next(error)
     }   
+}
+export const changeCouponStatus = async (req:Request, res:Response, next:NextFunction): Promise<any> => {
+    const errors = validationResult(req)
+    if(!errors.isEmpty()){
+        return res.status(400).json({
+            errors: errors.array()
+        })
+    }
+    try {
+        const query = req.query.status as string
+        const code = req.query.code as string
+        let coupon = ''
+        if(query === 'activate'){
+            coupon = await aDCouponStatus(true, code)
+        } else if (query === 'deactivate'){
+            coupon = await aDCouponStatus(false, code)
+        }
+        return res.status(200).json({
+            status: true,
+            message: 'coupon status updated successfully'
+        })
+    } catch (error) {
+        if(error instanceof Error){
+            if(error.message === ''){
+                return res.status(400).json({
+                    status: false,
+                    message: 'coupon status already set'
+                })
+            } else {
+                next(error)
+            }
+        }
+    }
 }

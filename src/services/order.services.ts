@@ -3,6 +3,7 @@ import OrderModel, { IOrder } from "../models/order.model"
 import SubOrderModel, { IOrderProduct, ISubOrder } from "../models/suborder.model"
 import { creditAuthorAccount } from "./auth.services"
 import { groupProducts, IProductDefuse, updateStockOrderInitiation } from "./product.services"
+import { updateCouponUsage } from "./coupon.services"
 export interface ISearchQueries {
     trackingCode?: string
     user?: string
@@ -21,7 +22,12 @@ export const createOrder = async (data:IOrder, session: ClientSession): Promise<
 }
 export const newSubOrder = async (data:ISubOrder, session: ClientSession): Promise<ISubOrder> => {
     const subOrder = await SubOrderModel.create([data], {session})
-    // update coupon usage for each product with coupon
+    const products = data.products
+    for(const product of products) {
+        if(product.coupon !== '' && product.coupon !== undefined){
+            await updateCouponUsage(product.coupon as string, session)
+        }
+    }
     if(!subOrder){
         throw new Error('Error creating suborder')
     }

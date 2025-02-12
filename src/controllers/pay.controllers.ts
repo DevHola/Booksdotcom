@@ -3,7 +3,14 @@ const paystack = new Paystack(process.env.PAYSTACKSECRET as string);
 import { Request, Response, NextFunction } from 'express';
 import { IProductDefuse } from '../services/product.services';
 import { UserByEmail } from '../services/auth.services';
+import { validationResult } from 'express-validator';
 export const payment = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+      const errors = validationResult(req)
+        if(!errors.isEmpty()){
+            return res.status(400).json({
+                errors: errors.array()
+            })
+        }
     try {
         const { email, total, trackingCode } = req.body
         const product = req.body.products as IProductDefuse

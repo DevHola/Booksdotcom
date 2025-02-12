@@ -3,11 +3,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeDiscountStatus = exports.updateDiscountStatus = exports.updateStockOrderInitiation = exports.groupProducts = exports.getProductAuthoor = exports.updateCoverImgs = exports.addPreviewFile = exports.recentlySold = exports.bestSellers = exports.bestBooksFromGenre = exports.newArrivals = exports.searchProducts = exports.EditProduct = exports.getProductsByPublisher = exports.getProductsByAuthor = exports.getProductsByCategory = exports.getProductByIsbn = exports.getProductByTitle = exports.getAllProduct = exports.getProductById = exports.newProduct = void 0;
+exports.recommender = exports.updateDiscountStatus = exports.updateStockOrderInitiation = exports.groupProducts = exports.getProductAuthoor = exports.updateCoverImgs = exports.addPreviewFile = exports.recentlySold = exports.bestSellers = exports.bestBooksFromGenre = exports.newArrivals = exports.searchProducts = exports.EditProduct = exports.getProductsByPublisher = exports.getProductsByAuthor = exports.getProductsByCategory = exports.getProductByIsbn = exports.getProductByTitle = exports.getAllProduct = exports.getProductById = exports.newProduct = void 0;
 const product_model_1 = __importDefault(require("../models/product.model"));
 const category_model_1 = __importDefault(require("../models/category.model"));
 const order_model_1 = __importDefault(require("../models/order.model"));
 const suborder_model_1 = __importDefault(require("../models/suborder.model"));
+const User_model_1 = __importDefault(require("../models/User.model"));
 const newProduct = async (data) => {
     const product = await product_model_1.default.create({
         title: data.title,
@@ -225,23 +226,21 @@ const bestSellers = async (page, limit) => {
 exports.bestSellers = bestSellers;
 const recentlySold = async (page, limit) => {
     const getRecentOrder = await order_model_1.default.find().sort({ createdAt: -1 }).limit(50);
-    if (!getRecentOrder)
+    if (getRecentOrder.length === 0)
         throw new Error('No order exist');
-    const getSubOrder = await suborder_model_1.default.find({ orderid: { $in: getRecentOrder } }).populate('products').exec();
-    let productarray = [];
+    let orderids = getRecentOrder.map(order => order._id);
+    const getSubOrder = await suborder_model_1.default.find({ orderid: { $in: orderids } }).populate('products').exec();
+    let productid = new Set();
     for (let sub of getSubOrder) {
-        productarray = productarray.concat(sub.products);
+        for (let product of sub.products) {
+            productid.add(product.product.toString());
+        }
     }
-    productarray = [...new Set(productarray)];
-    let productid = [];
-    for (let product of productarray) {
-        productid.push(product.product);
-    }
-    const products = await product_model_1.default.find({ _id: { $in: productid } }, { 'format.downloadLink': 0 }).populate({
+    const products = await product_model_1.default.find({ _id: { $in: Array.from(productid) } }, { 'format.downloadLink': 0 }).populate({
         path: 'categoryid',
         select: 'name'
     }).skip((page - 1) * limit).limit(limit);
-    return { products, currentPage: page, totalPage: Math.ceil(productarray.length / limit), totalProducts: productarray.length };
+    return { products, currentPage: page, totalPage: Math.ceil(productid.size / limit), totalProducts: productid.size };
 };
 exports.recentlySold = recentlySold;
 const addPreviewFile = async (url, productid) => {
@@ -304,10 +303,10 @@ const updateStockOrderInitiation = async (productId, quantity, session) => {
     }, { upsert: true }).session(session);
 };
 exports.updateStockOrderInitiation = updateStockOrderInitiation;
-const updateDiscountStatus = async (ids, session) => {
+const updateDiscountStatus = async (ids, status, session) => {
     const products = await product_model_1.default.updateMany({ _id: { $in: ids } }, {
         $set: {
-            isDiscounted: true
+            isDiscounted: status
         }
     }, { upsert: true }).session(session);
     if (!products) {
@@ -315,11 +314,24 @@ const updateDiscountStatus = async (ids, session) => {
     }
 };
 exports.updateDiscountStatus = updateDiscountStatus;
-const removeDiscountStatus = async (ids, status, session) => {
-    const products = await product_model_1.default.updateMany({ _id: { $in: ids } }, {
-        $set: {
-            isDiscounted: status
+const recommender = async (userid) => {
+    const user = await User_model_1.default.findById(userid, { preferences: 1 });
+    if (!user) {
+        throw new Error('user not found');
+    }
+    let preference = user.preferences;
+    let creators = new Set();
+    const orders = await order_model_1.default.find({ user: userid }, { creators: 1 });
+    for (let order of orders) {
+        for (let creator of order.creators) {
+            creators.add(creator);
         }
-    }, { upsert: true }).session(session);
+    }
+    let preferenceBooks = await product_model_1.default.find({ categoryid: { $in: preference } }, { title: 1, coverImage: 1, averageRating: 1, user: 1 });
+    let creatorsBooks = await product_model_1.default.find({ user: { $in: Array.from(creators) } }, { title: 1, coverImage: 1, averageRating: 1, user: 1 }, { limit: 10 });
+    let rawRecommendedBooks = [...preferenceBooks, ...creatorsBooks];
+    let uniqueRecommendedBook = Array.from(new Map(rawRecommendedBooks.map(book => [book._id.toString(), book])).values());
+    uniqueRecommendedBook.sort((a, b) => (Number(b.averageRating) || 0) - (Number(a.averageRating) || 0) || (Number(b.totalSold) || 0) - (Number(a.totalSold) || 0));
+    return uniqueRecommendedBook;
 };
-exports.removeDiscountStatus = removeDiscountStatus;
+exports.recommender = recommender;
