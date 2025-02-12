@@ -44,7 +44,7 @@ if (!clientSecret) {
 exports.GGstrategy = new passport_google_oauth20_1.Strategy({
     clientID,
     clientSecret,
-    callbackURL: "http://localhost:8000/api/auth/google/callback",
+    callbackURL: process.env.CALLBACKURL,
     passReqToCallback: true
 }, async function (request, accessToken, refreshToken, profile, done) {
     const data = {

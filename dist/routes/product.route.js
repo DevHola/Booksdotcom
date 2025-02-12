@@ -924,7 +924,137 @@ productRouter.get('/best/sellers', product_controllers_1.bestSellersProducts);
  */
 productRouter.get('/recently/sold', product_controllers_1.recentlySoldBooks);
 // order
+/**
+ * @swagger
+ * /order:
+ *   post:
+ *     summary: Create a new order
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               total:
+ *                 type: number
+ *                 example: 10000
+ *               products:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     product:
+ *                       type: string
+ *                       example: "67927df747908ab4f63f4f66"
+ *                     quantity:
+ *                       type: integer
+ *                       example: 1
+ *                     format:
+ *                       type: string
+ *                       example: "physical"
+ *                     price:
+ *                       type: number
+ *                       example: 100
+ *               status:
+ *                 type: boolean
+ *                 example: true
+ *               paymentHandler:
+ *                 type: string
+ *                 example: "paystack"
+ *               ref:
+ *                 type: string
+ *                 example: "854hjdjfd"
+ *     responses:
+ *       200:
+ *         description: Order successfully created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 distribute:
+ *                   type: object
+ *                   description: Order distribution details
+ *       400:
+ *         description: Error in creating order
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Error in creating order"
+ *       500:
+ *         description: Internal server error
+ */
 productRouter.post('/order', validation_1.validateOrder, passport_1.default.authenticate('jwt', { session: false }), (0, passport_2.authorization)({ role: ['user'] }), order_controllers_1.createUserOrder);
+/**
+ * @swagger
+ * /product/user/order:
+ *   get:
+ *     summary: Get all orders for the normal users with pagination
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: Page number for pagination
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: Number of orders per page for pagination
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved orders for the creator
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 orders:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       orderId:
+ *                         type: string
+ *                         example: "60b8d7d1a24f1a001f9f53b2"
+ *                       totalAmount:
+ *                         type: number
+ *                         example: 150.0
+ *                       orderStatus:
+ *                         type: string
+ *                         example: "pending"
+ *                       orderDate:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-01-30T14:00:00Z"
+ *       401:
+ *         description: Unauthorized, user authentication failed
+ *       403:
+ *         description: Forbidden, user does not have sufficient permissions
+ *       500:
+ *         description: Internal server error
+ */
 productRouter.get('/user/order', passport_1.default.authenticate('jwt', { session: false }), (0, passport_2.authorization)({ role: ['user'] }), order_controllers_1.getUserOrder);
 /**
  * @swagger
@@ -1099,7 +1229,56 @@ productRouter.get('/creator/orders', passport_1.default.authenticate('jwt', { se
  *         description: Internal server error
  */
 productRouter.get('/creator/single/order', validation_1.orderidqueryValidation, passport_1.default.authenticate('jwt', { session: false }), (0, passport_2.authorization)({ role: ['creator'] }), order_controllers_1.allCreatorOrderSuborder);
-// coupon
 // paystack webhook
 productRouter.post('/webhook/order', order_controllers_1.handlerWebhook);
+/**
+ * @swagger
+ * /product/recommendations:
+ *   get:
+ *     summary: Get product recommendations for the user
+ *     tags: [Product]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         description: Bearer token for authentication
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved product recommendations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 recommendations:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         example: "60b8d7d1a24f1a001f9f53b2"
+ *                       title:
+ *                         type: string
+ *                         example: "Wireless Headphones"
+ *                       coverImage:
+ *                         type: array
+ *                       averageRating:
+ *                         type: number
+ *                         example: 4.5
+ *       401:
+ *         description: Unauthorized, invalid or missing token
+ *       403:
+ *         description: Forbidden, user does not have sufficient permissions
+ *       500:
+ *         description: Internal server error
+ */
+productRouter.get('/recommendations', passport_1.default.authenticate('jwt', { session: false }), (0, passport_2.authorization)({ role: ['user'] }), product_controllers_1.userRecommendation);
 exports.default = productRouter;

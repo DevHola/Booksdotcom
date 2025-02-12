@@ -9,6 +9,7 @@ const order_model_1 = __importDefault(require("../models/order.model"));
 const suborder_model_1 = __importDefault(require("../models/suborder.model"));
 const auth_services_1 = require("./auth.services");
 const product_services_1 = require("./product.services");
+const coupon_services_1 = require("./coupon.services");
 const createOrder = async (data, session) => {
     const order = await order_model_1.default.create([data], { session });
     return order[0];
@@ -16,7 +17,12 @@ const createOrder = async (data, session) => {
 exports.createOrder = createOrder;
 const newSubOrder = async (data, session) => {
     const subOrder = await suborder_model_1.default.create([data], { session });
-    // update coupon usage for each product with coupon
+    const products = data.products;
+    for (const product of products) {
+        if (product.coupon !== '' && product.coupon !== undefined) {
+            await (0, coupon_services_1.updateCouponUsage)(product.coupon, session);
+        }
+    }
     if (!subOrder) {
         throw new Error('Error creating suborder');
     }

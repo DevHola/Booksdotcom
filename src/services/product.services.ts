@@ -3,6 +3,7 @@ import CategoryModel from "../models/category.model";
 import OrderModel from "../models/order.model";
 import SubOrderModel from "../models/suborder.model";
 import { ClientSession } from "mongoose";
+import UserModel from "../models/User.model";
 
 export interface IProductFilter {
     title?: string;
@@ -245,24 +246,22 @@ export const bestSellers = async (page: number, limit: number): Promise<ISearchR
 }
 export const recentlySold = async (page: number, limit: number): Promise<ISearchResult> => {
     const getRecentOrder = await OrderModel.find().sort({ createdAt: -1 }).limit(50)
-    if(!getRecentOrder) throw new Error('No order exist')
-    const getSubOrder = await SubOrderModel.find({orderid: { $in: getRecentOrder}}).populate('products').exec()
+    if(getRecentOrder.length === 0) throw new Error('No order exist')
+    let orderids = getRecentOrder.map(order => order._id)
+    const getSubOrder = await SubOrderModel.find({orderid: { $in: orderids}}).populate('products').exec()
     
-    let productarray: any[] = []
+    let productid : Set<string> = new Set()
     for(let sub of getSubOrder){
-         productarray = productarray.concat(sub.products)
+        for(let product of sub.products){
+            productid.add(product.product.toString())
+        }
     }
-    productarray = [...new Set(productarray)];
-    let productid :any [] = []
-    for(let product of productarray){
-        productid.push(product.product)
-    }
-     const products = await productModel.find({_id: { $in: productid } }, {'format.downloadLink': 0}).populate({
+     const products = await productModel.find({_id: { $in: Array.from(productid) } }, {'format.downloadLink': 0}).populate({
         path: 'categoryid',
         select: 'name'
     }).skip(( page -1 ) * limit).limit(limit)
 
-     return {products, currentPage: page, totalPage: Math.ceil(productarray.length/limit), totalProducts: productarray.length} as ISearchResult
+     return {products, currentPage: page, totalPage: Math.ceil(productid.size/limit), totalProducts: productid.size} as ISearchResult
 
 }
 export const addPreviewFile = async (url: string, productid: string): Promise<IProduct> => {
@@ -323,20 +322,37 @@ export const updateStockOrderInitiation = async (productId: string, quantity: nu
     },{ upsert: true }).session(session)
     
 }
-export const updateDiscountStatus = async (ids: string[], session: ClientSession) => {
-    const products = await productModel.updateMany({_id: {$in:ids}}, {
-        $set:{
-            isDiscounted: true
-        }
-    }, {upsert: true}).session(session)    
-    if(!products) {
-        throw new Error('error occurred updating product discount')
-    }
-}
-export const removeDiscountStatus = async (ids: string[], status: boolean, session: ClientSession) => {
+export const updateDiscountStatus = async (ids: string[], status: boolean, session: ClientSession) => {
     const products = await productModel.updateMany({_id: {$in:ids}}, {
         $set:{
             isDiscounted: status
         }
-    }, {upsert: true}).session(session)   
+    }, {upsert: true}).session(session)  
+    if(!products) {
+        throw new Error('error occurred updating product discount')
+    } 
+}
+export const recommender = async (userid: string) => {
+    const user = await UserModel.findById(userid, {preferences: 1})
+    if(!user){
+        throw new Error('user not found')
+    }
+    let preference = user.preferences
+    let creators: Set<string> = new Set()
+    const orders = await OrderModel.find({user: userid},{creators: 1})
+    for(let order of orders){
+        for(let creator of order.creators){
+            creators.add(creator as string)
+        }
+    }
+    let preferenceBooks :IProduct[] = await productModel.find({categoryid : {$in: preference}},{title: 1, coverImage: 1, averageRating: 1, user: 1})
+    let creatorsBooks :IProduct[] = await productModel.find({user: {$in: Array.from(creators)}},{title: 1, coverImage: 1, averageRating: 1, user: 1},{limit:10})
+    let rawRecommendedBooks = [...preferenceBooks, ...creatorsBooks]
+    let uniqueRecommendedBook = Array.from(
+        new Map(rawRecommendedBooks.map(book => [book._id.toString(), book])).values()
+    )
+    uniqueRecommendedBook.sort((a, b) => 
+        (Number(b.averageRating) || 0) - (Number(a.averageRating) || 0) || (Number(b.totalSold) || 0) - (Number(a.totalSold) || 0)
+    );
+    return uniqueRecommendedBook
 }

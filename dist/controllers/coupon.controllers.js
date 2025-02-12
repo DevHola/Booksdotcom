@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.couponDelete = exports.checkACoupon = exports.getSingleCoupon = exports.getAllCoupons = exports.createCoupon = void 0;
+exports.changeCouponStatus = exports.couponDelete = exports.checkACoupon = exports.getSingleCoupon = exports.getAllCoupons = exports.createCoupon = void 0;
 const coupon_services_1 = require("../services/coupon.services");
 const express_validator_1 = require("express-validator");
 const product_services_1 = require("../services/product.services");
@@ -144,3 +144,40 @@ const couponDelete = async (req, res, next) => {
     }
 };
 exports.couponDelete = couponDelete;
+const changeCouponStatus = async (req, res, next) => {
+    const errors = (0, express_validator_1.validationResult)(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            errors: errors.array()
+        });
+    }
+    try {
+        const query = req.query.status;
+        const code = req.query.code;
+        let coupon = '';
+        if (query === 'activate') {
+            coupon = await (0, coupon_services_1.aDCouponStatus)(true, code);
+        }
+        else if (query === 'deactivate') {
+            coupon = await (0, coupon_services_1.aDCouponStatus)(false, code);
+        }
+        return res.status(200).json({
+            status: true,
+            message: 'coupon status updated successfully'
+        });
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            if (error.message === '') {
+                return res.status(400).json({
+                    status: false,
+                    message: 'coupon status already set'
+                });
+            }
+            else {
+                next(error);
+            }
+        }
+    }
+};
+exports.changeCouponStatus = changeCouponStatus;

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateCoverImages = exports.addProductPreviewFile = exports.recentlySoldBooks = exports.bestSellersProducts = exports.bestBooksByGenre = exports.newArrivalsProduct = exports.updatePriceFormat = exports.IncreaseStockForPhysicalFormat = exports.removeFormat = exports.addFormat = exports.search = exports.productEdit = exports.productByPublisher = exports.productByAuthor = exports.ProductByCategory = exports.productByIsbn = exports.getproductAll = exports.productByTitle = exports.productById = exports.createProduct = void 0;
+exports.userRecommendation = exports.updateCoverImages = exports.addProductPreviewFile = exports.recentlySoldBooks = exports.bestSellersProducts = exports.bestBooksByGenre = exports.newArrivalsProduct = exports.updatePriceFormat = exports.IncreaseStockForPhysicalFormat = exports.removeFormat = exports.addFormat = exports.search = exports.productEdit = exports.productByPublisher = exports.productByAuthor = exports.ProductByCategory = exports.productByIsbn = exports.getproductAll = exports.productByTitle = exports.productById = exports.createProduct = void 0;
 const express_validator_1 = require("express-validator");
 const product_services_1 = require("../services/product.services");
 const format_services_1 = require("../services/format.services");
@@ -546,3 +546,25 @@ const updateCoverImages = async (req, res, next) => {
     }
 };
 exports.updateCoverImages = updateCoverImages;
+const userRecommendation = async (req, res, next) => {
+    try {
+        const user = req.user;
+        const id = user.id;
+        const products = await (0, product_services_1.recommender)(id);
+        return res.status(200).json({
+            status: true,
+            recommendations: products
+        });
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            if (error.message === 'user not found') {
+                return res.status(401).json({
+                    status: false,
+                    message: 'unauthorized'
+                });
+            }
+        }
+    }
+};
+exports.userRecommendation = userRecommendation;

@@ -4,7 +4,14 @@ exports.verify = exports.payment = void 0;
 const paystack_sdk_1 = require("paystack-sdk");
 const paystack = new paystack_sdk_1.Paystack(process.env.PAYSTACKSECRET);
 const auth_services_1 = require("../services/auth.services");
+const express_validator_1 = require("express-validator");
 const payment = async (req, res, next) => {
+    const errors = (0, express_validator_1.validationResult)(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            errors: errors.array()
+        });
+    }
     try {
         const { email, total, trackingCode } = req.body;
         const product = req.body.products;

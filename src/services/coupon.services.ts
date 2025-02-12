@@ -1,7 +1,7 @@
 import mongoose, { ClientSession } from "mongoose"
 import CouponModel, { ICoupon } from "../models/coupon.model"
 import ruleModel, { IRules } from "../models/couponrule.model"
-import { removeDiscountStatus, updateDiscountStatus } from "./product.services"
+import { updateDiscountStatus } from "./product.services"
 import moment from "moment"
 import cron from "node-cron"
 import { IProduct } from "../models/product.model"
@@ -16,7 +16,7 @@ export const couponCreation = async (data: ICoupon) => {
     return session.withTransaction(async () => {
         try {
             const coupon = await newCoupon(data, session)   
-            await updateDiscountStatus(data.product as string[], session)
+            await updateDiscountStatus(data.product as string[], true, session)
             if(data.ruleType !== 'none' && data.rules && coupon) {
                     const refined = await structureSubOrder(data.rules, data.ruleType, coupon._id as string)
                     const rules = await newRules(refined, session)
@@ -122,21 +122,29 @@ export const validityCheck = async (coupon: ICoupon, date: any): Promise<{isVali
             
     }
 }
-export const activateCoupon = async (type: "activate", code: string) => {
+export const aDCouponStatus = async (type: boolean, code: string): Promise<any> => {
     const coupon = await CouponModel.findOne({code: code})
-    if(coupon && coupon.isActive){
-        throw new Error('coupon already active')
+    if(coupon && coupon.isActive === type){
+        throw new Error('coupon status set already')
     }
-    const update = await CouponModel.findOneAndUpdate({code: code}, {
-        $set: {
-            isActive: true
+    const session = await mongoose.startSession()
+    return session.withTransaction(async () => {
+        try {
+            const update = await CouponModel.findOneAndUpdate({code: code}, {
+                $set: {
+                    isActive: type
+                }
+            }, {new: true}).session(session)
+            if(type === true){
+                await updateDiscountStatus(coupon?.product as string[], true, session)
+            } else {
+                await updateDiscountStatus(coupon?.product as string[], false, session)
+            }
+            return update
+        } catch (error) {
+            throw new Error('error updating coupon status')
         }
-    }, {new: true})
-    // update product in coupon to true
-
-}
-export const DeactivateCoupon = async (type: "deactivate", code: string) => {
-    
+    }).finally(()=> session.endSession())
 }
 export const deleteCoupon = async (couponCode: string): Promise<void> => {
     const session = await mongoose.startSession()
@@ -149,12 +157,19 @@ export const deleteCoupon = async (couponCode: string): Promise<void> => {
                 }
             }).session(session)
             const coupondata = await CouponModel.findOne({code: couponCode}).session(session) as ICoupon   
-            await removeDiscountStatus(coupondata.product as string[], false as boolean, session)
+            await updateDiscountStatus(coupondata.product as string[], false as boolean, session)
         } catch (error) {
             throw new Error('error deleting coupon')
         }
     })
     .finally(()=> session.endSession())
+}
+export const updateCouponUsage = async (code: string, session: ClientSession): Promise<ICoupon> => {
+    return await CouponModel.findOneAndUpdate({code: code}, {
+        $inc: {
+            usageCount: 1
+        }
+    }, {new: true}).session(session) as ICoupon  
 }
 export const expiredCouponDeletion = async (data:any): Promise<void> => {
  const session = await mongoose.startSession()
@@ -175,7 +190,7 @@ export const expiredCouponDeletion = async (data:any): Promise<void> => {
            $set: {
                isActive: false
            }
-        }).session(session), await removeDiscountStatus(couponProducts, false, session)])
+        }).session(session), await updateDiscountStatus(couponProducts, false, session)])
        
     } catch (error) {
         console.log(error)

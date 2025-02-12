@@ -3,6 +3,7 @@ import mongoose, {Document, Schema, Model, model} from "mongoose";
 import { ICategory } from "./category.model";
 import { formatSchema, IFormat } from "./format.model";
 export interface IProduct extends Document {
+    _id: string
     title: String
     description: String
     ISBN: String
