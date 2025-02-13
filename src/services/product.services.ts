@@ -250,18 +250,19 @@ export const recentlySold = async (page: number, limit: number): Promise<ISearch
     let orderids = getRecentOrder.map(order => order._id)
     const getSubOrder = await SubOrderModel.find({orderid: { $in: orderids}}).populate('products').exec()
     
-    let productid : Set<string> = new Set()
+    let productid : any[] = [] 
     for(let sub of getSubOrder){
         for(let product of sub.products){
-            productid.add(product.product.toString())
+            productid.push(product.product.toString())
         }
     }
-     const products = await productModel.find({_id: { $in: Array.from(productid) } }, {'format.downloadLink': 0}).populate({
+    productid = [...new Set(productid)]
+     const products = await productModel.find({_id: { $in: productid } }, {'format.downloadLink': 0}).populate({
         path: 'categoryid',
         select: 'name'
     }).skip(( page -1 ) * limit).limit(limit)
 
-     return {products, currentPage: page, totalPage: Math.ceil(productid.size/limit), totalProducts: productid.size} as ISearchResult
+     return {products, currentPage: page, totalPage: Math.ceil(productid.length/limit), totalProducts: productid.length} as ISearchResult
 
 }
 export const addPreviewFile = async (url: string, productid: string): Promise<IProduct> => {
@@ -333,52 +334,52 @@ export const updateDiscountStatus = async (ids: string[], status: boolean, sessi
     } 
 }
 export const recommender = async (userid: string) => {
-  try {
-    // Fetch user preferences
-    const user = await UserModel.findById(userid, { preferences: 1 });
-    if (!user) {
-      throw new Error('User not found');
-    }
+//   try {
+//     // Fetch user preferences
+//     const user = await UserModel.findById(userid, { preferences: 1 });
+//     if (!user) {
+//       throw new Error('User not found');
+//     }
 
-    const preference = user.preferences;
+//     const preference = user.preferences;
 
-    // Fetch creators from orders
-    const orders = await OrderModel.find({ user: userid }, { creators: 1 });
-    const creators = new Set<string>();
-    for (const order of orders) {
-      for (const creator of order.creators) {
-        creators.add(creator as string);
-      }
-    }
+//     // Fetch creators from orders
+//     const orders = await OrderModel.find({ user: userid }, { creators: 1 });
+//     const creators = new Set<string>();
+//     for (const order of orders) {
+//       for (const creator of order.creators) {
+//         creators.add(creator as string);
+//       }
+//     }
 
-    // Fetch books with limits
-    const preferenceBooks: IProduct[] = await productModel.find(
-      { categoryid: { $in: preference } },
-      { title: 1, coverImage: 1, averageRating: 1, user: 1 },
-      { limit: 100 } // Limit results
-    );
+//     // Fetch books with limits
+//     const preferenceBooks: IProduct[] = await productModel.find(
+//       { categoryid: { $in: preference } },
+//       { title: 1, coverImage: 1, averageRating: 1, user: 1 },
+//       { limit: 100 } // Limit results
+//     );
 
-    const creatorsBooks: IProduct[] = await productModel.find(
-      { user: { $in: Array.from(creators) } },
-      { title: 1, coverImage: 1, averageRating: 1, user: 1 },
-      { limit: 10 } // Limit results
-    );
+//     const creatorsBooks: IProduct[] = await productModel.find(
+//       { user: { $in: Array.from(creators) } },
+//       { title: 1, coverImage: 1, averageRating: 1, user: 1 },
+//       { limit: 10 } // Limit results
+//     );
 
-    // Deduplicate and sort books
-    const uniqueBooksMap = new Map<string, IProduct>();
-    for (const book of [...preferenceBooks, ...creatorsBooks]) {
-      uniqueBooksMap.set(book._id.toString(), book);
-    }
+//     // Deduplicate and sort books
+//     const uniqueBooksMap = new Map<string, IProduct>();
+//     for (const book of [...preferenceBooks, ...creatorsBooks]) {
+//       uniqueBooksMap.set(book._id.toString(), book);
+//     }
 
-    const uniqueRecommendedBook = Array.from(uniqueBooksMap.values());
-    uniqueRecommendedBook.sort((a, b) =>
-      (Number(b.averageRating) || 0) - (Number(a.averageRating) || 0) ||
-      (Number(b.totalSold) || 0) - (Number(a.totalSold) || 0)
-    );
+//     const uniqueRecommendedBook = Array.from(uniqueBooksMap.values());
+//     uniqueRecommendedBook.sort((a, b) =>
+//       (Number(b.averageRating) || 0) - (Number(a.averageRating) || 0) ||
+//       (Number(b.totalSold) || 0) - (Number(a.totalSold) || 0)
+//     );
 
-    return uniqueRecommendedBook;
-  } catch (error) {
-    console.error('Error in recommender function:', error);
-    throw error;
-  }
+//     return uniqueRecommendedBook;
+//   } catch (error) {
+//     console.error('Error in recommender function:', error);
+//     throw error;
+//   }
 };
