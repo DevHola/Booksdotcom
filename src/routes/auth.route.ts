@@ -334,11 +334,15 @@ AuthRouter.get('/google/callback', passport.authenticate( 'google', {
      session: false,
      failureRedirect: '/callback/failure'
   }), (req, res) => {
-    const {token, action} = req.user as {token: string, action: string}
-    if (action === 'login'){  
-     return res.redirect(`http://yourfrontend.com/login-success?token=${token}`);
-    } else if (action === 'register'){
-      return res.redirect(`http://yourfrontend.com/register-success?token=${token}`);
+    const {token, action, role} = req.user as {token: string, action: string, role?: string}
+    console.log(`${process.env.REGISTER_REDIRECT}`)
+    if (action === 'login' && role === 'user'){  
+     return res.redirect(`${process.env.USER_REDIRECT}?token=${token}`);
+    } else if(action === 'login' && role === 'creator'){
+      return res.redirect(`${process.env.CREATOR_REDIRECT}?token=${token}`);
+    }
+     else if (action === 'register'){
+      return res.redirect(`${process.env.REGISTER_REDIRECT}?token=${token}`);
     }
   });
 AuthRouter.get('/callback/failure' , (req , res) => {

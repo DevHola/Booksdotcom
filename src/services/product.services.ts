@@ -333,13 +333,13 @@ export const updateDiscountStatus = async (ids: string[], status: boolean, sessi
         throw new Error('error occurred updating product discount')
     } 
 }
-export const recommender = async (userid: string) => {
+export const recommender = async (userid: string): Promise<IProduct[]> => {
   try {
     const user = await UserModel.findById(userid, { preferences: 1 });
     if (!user) {
       throw new Error('User not found');
     }
-
+    console.log(user)
     const preference = user.preferences;
 
     // Fetch creators from orders

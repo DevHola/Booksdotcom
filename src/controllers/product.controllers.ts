@@ -518,7 +518,7 @@ export const updateCoverImages = async (req: Request, res: Response, next: NextF
 export const userRecommendation = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const user = req.user as DecodedToken
-        const id = user.id as string
+        const id = user.id.toString() as string
         const products = await recommender(id)
         return res.status(200).json({
             status: true,
