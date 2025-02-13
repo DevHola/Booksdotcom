@@ -8,7 +8,6 @@ const product_model_1 = __importDefault(require("../models/product.model"));
 const category_model_1 = __importDefault(require("../models/category.model"));
 const order_model_1 = __importDefault(require("../models/order.model"));
 const suborder_model_1 = __importDefault(require("../models/suborder.model"));
-const User_model_1 = __importDefault(require("../models/User.model"));
 const newProduct = async (data) => {
     const product = await product_model_1.default.create({
         title: data.title,
@@ -230,17 +229,18 @@ const recentlySold = async (page, limit) => {
         throw new Error('No order exist');
     let orderids = getRecentOrder.map(order => order._id);
     const getSubOrder = await suborder_model_1.default.find({ orderid: { $in: orderids } }).populate('products').exec();
-    let productid = new Set();
+    let productid = [];
     for (let sub of getSubOrder) {
         for (let product of sub.products) {
-            productid.add(product.product.toString());
+            productid.push(product.product.toString());
         }
     }
-    const products = await product_model_1.default.find({ _id: { $in: Array.from(productid) } }, { 'format.downloadLink': 0 }).populate({
+    productid = [...new Set(productid)];
+    const products = await product_model_1.default.find({ _id: { $in: productid } }, { 'format.downloadLink': 0 }).populate({
         path: 'categoryid',
         select: 'name'
     }).skip((page - 1) * limit).limit(limit);
-    return { products, currentPage: page, totalPage: Math.ceil(productid.size / limit), totalProducts: productid.size };
+    return { products, currentPage: page, totalPage: Math.ceil(productid.length / limit), totalProducts: productid.length };
 };
 exports.recentlySold = recentlySold;
 const addPreviewFile = async (url, productid) => {
@@ -315,23 +315,46 @@ const updateDiscountStatus = async (ids, status, session) => {
 };
 exports.updateDiscountStatus = updateDiscountStatus;
 const recommender = async (userid) => {
-    const user = await User_model_1.default.findById(userid, { preferences: 1 });
-    if (!user) {
-        throw new Error('user not found');
-    }
-    let preference = user.preferences;
-    let creators = new Set();
-    const orders = await order_model_1.default.find({ user: userid }, { creators: 1 });
-    for (let order of orders) {
-        for (let creator of order.creators) {
-            creators.add(creator);
-        }
-    }
-    let preferenceBooks = await product_model_1.default.find({ categoryid: { $in: preference } }, { title: 1, coverImage: 1, averageRating: 1, user: 1 });
-    let creatorsBooks = await product_model_1.default.find({ user: { $in: Array.from(creators) } }, { title: 1, coverImage: 1, averageRating: 1, user: 1 }, { limit: 10 });
-    let rawRecommendedBooks = [...preferenceBooks, ...creatorsBooks];
-    let uniqueRecommendedBook = Array.from(new Map(rawRecommendedBooks.map(book => [book._id.toString(), book])).values());
-    uniqueRecommendedBook.sort((a, b) => (Number(b.averageRating) || 0) - (Number(a.averageRating) || 0) || (Number(b.totalSold) || 0) - (Number(a.totalSold) || 0));
-    return uniqueRecommendedBook;
+    //   try {
+    //     // Fetch user preferences
+    //     const user = await UserModel.findById(userid, { preferences: 1 });
+    //     if (!user) {
+    //       throw new Error('User not found');
+    //     }
+    //     const preference = user.preferences;
+    //     // Fetch creators from orders
+    //     const orders = await OrderModel.find({ user: userid }, { creators: 1 });
+    //     const creators = new Set<string>();
+    //     for (const order of orders) {
+    //       for (const creator of order.creators) {
+    //         creators.add(creator as string);
+    //       }
+    //     }
+    //     // Fetch books with limits
+    //     const preferenceBooks: IProduct[] = await productModel.find(
+    //       { categoryid: { $in: preference } },
+    //       { title: 1, coverImage: 1, averageRating: 1, user: 1 },
+    //       { limit: 100 } // Limit results
+    //     );
+    //     const creatorsBooks: IProduct[] = await productModel.find(
+    //       { user: { $in: Array.from(creators) } },
+    //       { title: 1, coverImage: 1, averageRating: 1, user: 1 },
+    //       { limit: 10 } // Limit results
+    //     );
+    //     // Deduplicate and sort books
+    //     const uniqueBooksMap = new Map<string, IProduct>();
+    //     for (const book of [...preferenceBooks, ...creatorsBooks]) {
+    //       uniqueBooksMap.set(book._id.toString(), book);
+    //     }
+    //     const uniqueRecommendedBook = Array.from(uniqueBooksMap.values());
+    //     uniqueRecommendedBook.sort((a, b) =>
+    //       (Number(b.averageRating) || 0) - (Number(a.averageRating) || 0) ||
+    //       (Number(b.totalSold) || 0) - (Number(a.totalSold) || 0)
+    //     );
+    //     return uniqueRecommendedBook;
+    //   } catch (error) {
+    //     console.error('Error in recommender function:', error);
+    //     throw error;
+    //   }
 };
 exports.recommender = recommender;
