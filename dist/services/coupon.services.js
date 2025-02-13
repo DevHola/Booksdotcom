@@ -9,6 +9,7 @@ const coupon_model_1 = __importDefault(require("../models/coupon.model"));
 const couponrule_model_1 = __importDefault(require("../models/couponrule.model"));
 const product_services_1 = require("./product.services");
 const moment_1 = __importDefault(require("moment"));
+const node_cron_1 = __importDefault(require("node-cron"));
 const couponCreation = async (data) => {
     const session = await mongoose_1.default.startSession();
     return session.withTransaction(async () => {
@@ -249,7 +250,8 @@ const processFormatData = async (productdata, coupon) => {
     return data;
 };
 exports.processFormatData = processFormatData;
-// cron.schedule('0 0 * * *', async () => {    
-//     const count = await couponCount()
-//     if(count > 0) await expiredCouponDeletion(data)
-// })
+node_cron_1.default.schedule('0 0 * * *', async () => {
+    const count = await couponCount();
+    if (count > 0)
+        await (0, exports.expiredCouponDeletion)(exports.data);
+});

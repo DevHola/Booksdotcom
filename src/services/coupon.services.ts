@@ -250,7 +250,7 @@ export const processFormatData = async (productdata: IProduct, coupon: ICoupon):
     return data as IProcessformat[]
 }
 
-// cron.schedule('0 0 * * *', async () => {    
-//     const count = await couponCount()
-//     if(count > 0) await expiredCouponDeletion(data)
-// })
+cron.schedule('0 0 * * *', async () => {    
+    const count = await couponCount()
+    if(count > 0) await expiredCouponDeletion(data)
+})

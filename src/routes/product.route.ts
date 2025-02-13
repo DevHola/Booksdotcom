@@ -1291,5 +1291,5 @@ productRouter.post('/webhook/order', handlerWebhook)
  *         description: Internal server error
  */
 
-productRouter.get('/recommendations', passport.authenticate('jwt', { session: false }), authorization({role: ['user']}),  userRecommendation)
+productRouter.get('/user/recommendations', passport.authenticate('jwt', { session: false }), authorization({role: ['user']}),  userRecommendation)
 export default productRouter

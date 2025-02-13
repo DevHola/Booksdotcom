@@ -66,7 +66,7 @@ export const GGstrategy =  new GoogleStrategy({
     const user = await CheckUserExist(data.provider_id)
     if(user){
       const token = await generateToken(user as IUser, 'login')
-      return done(null, {token: token, action: 'login'});
+      return done(null, {token: token, action: 'login', role: user.role});
     } else{
      const token = await registerUser(data as IUser, 'verification')
       return done(null, {token: token, action: 'register'});
