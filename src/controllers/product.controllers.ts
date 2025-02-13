@@ -532,6 +532,8 @@ export const userRecommendation = async (req: Request, res: Response, next: Next
                     status: false,
                     message: 'unauthorized'
                 })
+            } else {
+                next(error)
             }
         }
     }

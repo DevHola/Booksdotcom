@@ -564,6 +564,9 @@ const userRecommendation = async (req, res, next) => {
                     message: 'unauthorized'
                 });
             }
+            else {
+                next(error);
+            }
         }
     }
 };

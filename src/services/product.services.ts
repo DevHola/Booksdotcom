@@ -334,52 +334,51 @@ export const updateDiscountStatus = async (ids: string[], status: boolean, sessi
     } 
 }
 export const recommender = async (userid: string) => {
-//   try {
-//     // Fetch user preferences
-//     const user = await UserModel.findById(userid, { preferences: 1 });
-//     if (!user) {
-//       throw new Error('User not found');
-//     }
+  try {
+    const user = await UserModel.findById(userid, { preferences: 1 });
+    if (!user) {
+      throw new Error('User not found');
+    }
 
-//     const preference = user.preferences;
+    const preference = user.preferences;
 
-//     // Fetch creators from orders
-//     const orders = await OrderModel.find({ user: userid }, { creators: 1 });
-//     const creators = new Set<string>();
-//     for (const order of orders) {
-//       for (const creator of order.creators) {
-//         creators.add(creator as string);
-//       }
-//     }
+    // Fetch creators from orders
+    const orders = await OrderModel.find({ user: userid }, { creators: 1 });
+    const creators = new Set<string>();
+    for (const order of orders) {
+      for (const creator of order.creators) {
+        creators.add(creator as string);
+      }
+    }
 
-//     // Fetch books with limits
-//     const preferenceBooks: IProduct[] = await productModel.find(
-//       { categoryid: { $in: preference } },
-//       { title: 1, coverImage: 1, averageRating: 1, user: 1 },
-//       { limit: 100 } // Limit results
-//     );
+    // Fetch books with limits
+    const preferenceBooks: IProduct[] = await productModel.find(
+      { categoryid: { $in: preference } },
+      { title: 1, coverImage: 1, averageRating: 1, user: 1 },
+      { limit: 50 } // Limit results
+    );
 
-//     const creatorsBooks: IProduct[] = await productModel.find(
-//       { user: { $in: Array.from(creators) } },
-//       { title: 1, coverImage: 1, averageRating: 1, user: 1 },
-//       { limit: 10 } // Limit results
-//     );
+    const creatorsBooks: IProduct[] = await productModel.find(
+      { user: { $in: Array.from(creators) } },
+      { title: 1, coverImage: 1, averageRating: 1, user: 1 },
+      { limit: 10 } // Limit results
+    );
 
-//     // Deduplicate and sort books
-//     const uniqueBooksMap = new Map<string, IProduct>();
-//     for (const book of [...preferenceBooks, ...creatorsBooks]) {
-//       uniqueBooksMap.set(book._id.toString(), book);
-//     }
+    // Deduplicate and sort books
+    const uniqueBooksMap = new Map<string, IProduct>();
+    for (const book of [...preferenceBooks, ...creatorsBooks]) {
+      uniqueBooksMap.set(book._id.toString(), book);
+    }
 
-//     const uniqueRecommendedBook = Array.from(uniqueBooksMap.values());
-//     uniqueRecommendedBook.sort((a, b) =>
-//       (Number(b.averageRating) || 0) - (Number(a.averageRating) || 0) ||
-//       (Number(b.totalSold) || 0) - (Number(a.totalSold) || 0)
-//     );
+    const uniqueRecommendedBook = Array.from(uniqueBooksMap.values());
+    uniqueRecommendedBook.sort((a, b) =>
+      (Number(b.averageRating) || 0) - (Number(a.averageRating) || 0) ||
+      (Number(b.totalSold) || 0) - (Number(a.totalSold) || 0)
+    );
 
-//     return uniqueRecommendedBook;
-//   } catch (error) {
-//     console.error('Error in recommender function:', error);
-//     throw error;
-//   }
+    return uniqueRecommendedBook;
+  } catch (error) {
+    console.error('Error in recommender function:', error);
+    throw error;
+  }
 };
