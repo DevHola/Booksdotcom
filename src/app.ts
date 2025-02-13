@@ -66,7 +66,7 @@ const startApp = async () => {
     console.error('❌ Database connection failed:', error);
   }
    // await seedcategory()
-  // await seedproducts()
+   // await seedproducts()
 }
 startApp()
 export default app

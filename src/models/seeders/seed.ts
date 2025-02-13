@@ -25,71 +25,71 @@ const categories = [
 ]
 const products = [
     {
-        title: "The Great Gatsby",
-        description: "A novel written by American author F. Scott Fitzgerald.",
-        ISBN: "9780743273565",
-        author: "F. Scott Fitzgerald",
-        publisher: "Scribner",
-        published_Date: new Date("1925-04-10"),
-        noOfPages: 180,
-        coverImage: ["great_gatsby_cover.jpg"],
-        categoryid: "6752a364e8267b14680cd564", // Replace with actual category ID
-        language:"english",
-        user: "6792739e2226029550cfe0f2" // Replace with actual user ID
-    },
-    {
-        title: "To Kill a Mockingbird",
-        description: "A novel by Harper Lee published in 1960.",
-        ISBN: "9780061120084",
-        author: "Harper Lee",
-        publisher: "J.B. Lippincott & Co.",
-        published_Date: new Date("1960-07-11"),
-        noOfPages: 281,
-        coverImage: ["to_kill_a_mockingbird_cover.jpg"],
-        categoryid: "6752a364e8267b14680cd565", // Replace with actual category ID
-        language:"english",
-        user: "6792739e2226029550cfe0f2" // Replace with actual user ID
-    },
-    {
-        title: "1984",
-        description: "A dystopian social science fiction novel and cautionary tale by the English writer George Orwell.",
-        ISBN: "9780451524935",
-        author: "George Orwell",
-        publisher: "Secker & Warburg",
-        published_Date: new Date("1949-06-08"),
-        noOfPages: 328,
-        coverImage: ["1984_cover.jpg"],
-        categoryid: "6752a364e8267b14680cd566", // Replace with actual category ID
-        language:"english",
-        user: "6792739e2226029550cfe0f2" // Replace with actual user ID
-    },
-    {
-        title: "Pride and Prejudice",
-        description: "A romantic novel of manners written by Jane Austen in 1813.",
-        ISBN: "9781503290563",
-        author: "Jane Austen",
-        publisher: "T. Egerton",
-        published_Date: new Date("1813-01-28"),
-        noOfPages: 279,
-        coverImage: ["pride_and_prejudice_cover.jpg"],
-        categoryid: "6752a364e8267b14680cd567", // Replace with actual category ID
-        language:"english",
-        user: "6792739e2226029550cfe0f2" // Replace with actual user ID
-    },
-    {
-        title: "The Hobbit",
-        description: "A children's fantasy novel by English author J. R. R. Tolkien.",
-        ISBN: "9780547928227",
-        author: "J. R. R. Tolkien",
-        publisher: "George Allen & Unwin",
-        published_Date: new Date("1937-09-21"),
-        noOfPages: 310,
-        coverImage: ["the_hobbit_cover.jpg"],
-        categoryid: "6752a364e8267b14680cd568", // Replace with actual category ID
-        language:"english",
-        user: "6792739e2226029550cfe0f2" // Replace with actual user ID
-    }
-]
+        title: 'Developing a Sense of Place',
+        description: 'How do cultural planners and policymakers work through the arts to create communities? What do artists need to build a sense of place in their community? To discuss these issues, Developing a Sense of...',
+        ISBN: '17873GDD57651',
+        author: 'Tamara Ashley, Alexis Weedon',
+        publisher: 'UCL Press',
+        published_Date: '2020-01-01T00:00:00.000Z',
+        noOfPages: 325,
+        coverImage: [ 'https://www.dbooks.org/img/books/1787357651s.jpg' ],
+        categoryid: '6752a364e8267b14680cd570',
+        language: 'english',
+        user: '6792739e2226029550cfe0f2'
+      },
+      {
+        title: 'Greedy Algorithms',
+        description: 'Each chapter comprises a separate study on some optimization problem giving both an introductory look into the theory the problem comes from and some new developments invented by author(s). Usually so...',
+        ISBN: '953515GD7981',
+        author: 'Witold Bednorz',
+        publisher: 'IntechOpen',
+        published_Date: '2008-01-01T00:00:00.000Z',
+        noOfPages: 600,
+        coverImage: [ 'https://www.dbooks.org/img/books/9535157981s.jpg' ],
+        categoryid: '6752a364e8267b14680cd570',
+        language: 'english',
+        user: '6792739e2226029550cfe0f2'
+      },
+      {
+        title: 'Who Saved the Parthenon?',
+        description: 'In this magisterial book, William St Clair unfolds the history of the Parthenon throughout the modern era to the present day, with special emphasis on the period before, during, and after the Greek Wa...',
+        ISBN: '1783744GDG634',
+        author: 'William St Clair',
+        publisher: 'Open Book Publishers',
+        published_Date: '2022-01-01T00:00:00.000Z',
+        noOfPages: 898,
+        coverImage: [ 'https://www.dbooks.org/img/books/1783744634s.jpg' ],
+        categoryid: '6752a364e8267b14680cd570',
+        language: 'english',
+        user: '6792739e2226029550cfe0f2'
+      },
+      {
+        title: 'History of International Relations',
+        description: 'Existing textbooks on international relations treat history in a cursory fashion and perpetuate a Euro-centric perspective. This textbook pioneers a new approach by historicizing the material traditio...',
+        ISBN: '17837402FS48',
+        author: 'Erik Ringmar',
+        publisher: 'Open Book Publishers',
+        published_Date: '2019-01-01T00:00:00.000Z',
+        noOfPages: 218,
+        coverImage: [ 'https://www.dbooks.org/img/books/1783740248s.jpg' ],
+        categoryid: '6752a364e8267b14680cd570',
+        language: 'english',
+        user: '6792739e2226029550cfe0f2'
+      },
+      {
+        title: 'Learn Ruby on Rails: Book Two',
+        description: 'In this book, you&#039;ll build a working web application so you&#039;ll gain hands-on experience. Along the way, you&#039;ll practice techniques used by professional Rails developers. And I&#039;ll help you understand w...',
+        ISBN: '567110HJ9817',
+        author: 'Daniel Kehoe',
+        publisher: 'Self-publishing',
+        published_Date: '2017-01-01T00:00:00.000Z',
+        noOfPages: 420,
+        coverImage: [ 'https://www.dbooks.org/img/books/5671109817s.jpg' ],
+        categoryid: '6752a364e8267b14680cd570',
+        language: 'english',
+        user: '6792739e2226029550cfe0f2'
+      }
+    ]
 export const seedcategory = async () => {
     await CategoryModel.insertMany(categories)
     console.log('inserted')
@@ -98,3 +98,4 @@ export const seedproducts = async () => {
     await productModel.insertMany(products)
     console.log('inserted')
 }
+// FICTION, POETRY, SELF-SERVICE, GRAPHIC
