@@ -180,7 +180,7 @@ const bestBooksFromGenre = async (category, page, limit) => {
             },
             {
                 $match: {
-                    'averageRating': { $gte: 4 },
+                    'totalSold': { $gte: 1000 },
                     'category.name': category
                 }
             },
@@ -208,7 +208,7 @@ const bestBooksFromGenre = async (category, page, limit) => {
                 }
             }
         ]).sort({ averageRating: -1, numberOfReviews: -1 }).skip((page - 1) * limit).limit(limit).exec(),
-        await product_model_1.default.find({ categoryid: searchcategory, averageRating: { $gt: 4 } }).countDocuments()
+        await product_model_1.default.find({ categoryid: searchcategory, totalSold: { $gt: 4 } }).countDocuments()
     ]);
     return { products, currentPage: page, totalPage: Math.ceil(totalproduct / limit), totalProducts: totalproduct };
 };

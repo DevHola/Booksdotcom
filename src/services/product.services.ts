@@ -201,7 +201,7 @@ export const bestBooksFromGenre = async (category: string, page: number, limit: 
         },
         {
             $match: {
-                'averageRating': { $gte: 4},
+                'totalSold': { $gte: 1000},
                 'category.name': category
             }
         },
@@ -230,7 +230,7 @@ export const bestBooksFromGenre = async (category: string, page: number, limit: 
         }
     
     ]).sort({ averageRating: -1, numberOfReviews: -1 }).skip((page - 1 ) * limit).limit(limit).exec(),
-    await productModel.find({ categoryid: searchcategory, averageRating: {$gt: 4} }).countDocuments()   
+    await productModel.find({ categoryid: searchcategory, totalSold: {$gt: 4} }).countDocuments()   
     ])
     return { products, currentPage: page, totalPage: Math.ceil(totalproduct/limit), totalProducts: totalproduct  } as ISearchResult
 }
