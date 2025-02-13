@@ -56,7 +56,7 @@ exports.GGstrategy = new passport_google_oauth20_1.Strategy({
     const user = await (0, auth_services_1.CheckUserExist)(data.provider_id);
     if (user) {
         const token = await (0, auth_services_1.generateToken)(user, 'login');
-        return done(null, { token: token, action: 'login' });
+        return done(null, { token: token, action: 'login', role: user.role });
     }
     else {
         const token = await (0, auth_services_1.registerUser)(data, 'verification');

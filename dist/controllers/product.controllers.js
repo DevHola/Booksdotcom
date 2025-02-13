@@ -549,7 +549,7 @@ exports.updateCoverImages = updateCoverImages;
 const userRecommendation = async (req, res, next) => {
     try {
         const user = req.user;
-        const id = user.id;
+        const id = user.id.toString();
         const products = await (0, product_services_1.recommender)(id);
         return res.status(200).json({
             status: true,

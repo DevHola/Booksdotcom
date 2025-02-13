@@ -1280,5 +1280,5 @@ productRouter.post('/webhook/order', order_controllers_1.handlerWebhook);
  *       500:
  *         description: Internal server error
  */
-productRouter.get('/recommendations', passport_1.default.authenticate('jwt', { session: false }), (0, passport_2.authorization)({ role: ['user'] }), product_controllers_1.userRecommendation);
+productRouter.get('/user/recommendations', passport_1.default.authenticate('jwt', { session: false }), (0, passport_2.authorization)({ role: ['user'] }), product_controllers_1.userRecommendation);
 exports.default = productRouter;

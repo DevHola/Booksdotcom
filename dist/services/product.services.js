@@ -321,6 +321,7 @@ const recommender = async (userid) => {
         if (!user) {
             throw new Error('User not found');
         }
+        console.log(user);
         const preference = user.preferences;
         // Fetch creators from orders
         const orders = await order_model_1.default.find({ user: userid }, { creators: 1 });
