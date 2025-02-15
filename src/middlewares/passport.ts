@@ -69,7 +69,7 @@ export const GGstrategy =  new GoogleStrategy({
       return done(null, {token: token, action: 'login', role: user.role});
     } else{
      const token = await registerUser(data as IUser, 'verification')
-      return done(null, {token: token, action: 'register'});
+     return done(null, {token: token, action: 'register', role: 'none'});
     }
 
 }) 

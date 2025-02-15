@@ -60,7 +60,7 @@ exports.GGstrategy = new passport_google_oauth20_1.Strategy({
     }
     else {
         const token = await (0, auth_services_1.registerUser)(data, 'verification');
-        return done(null, { token: token, action: 'register' });
+        return done(null, { token: token, action: 'register', role: 'none' });
     }
 });
 const authorization = (roles) => {
