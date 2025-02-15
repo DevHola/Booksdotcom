@@ -353,6 +353,39 @@ AuthRouter.get('/callback/failure', (req, res) => {
 });
 /**
  * @swagger
+ * /auth/user/preference/recommend:
+ *   post:
+ *     summary: Add a user preference - preference(categoryid) through registration flow
+ *     tags: [Preferences]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bearer token for authorization
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               preferences:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: Preference added
+ *       401:
+ *         description: Unauthorized
+ */
+AuthRouter.post('/user/preference/recommend', auth_controllers_1.preRecommendation);
+/**
+ * @swagger
  * /auth/user/wishlist:
  *   post:
  *     summary: Add an item to the user's wishlist

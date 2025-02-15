@@ -1,5 +1,5 @@
 import express from 'express'
-import { forgetPassword, register, login, ResetPassword, authUser, activateAccount, assignRole, initActivation, addToWish, removewishlist, userwishlist, addPreference, removePreference, featuredAuthors, userPreference } from '../controllers/auth.controllers'
+import { forgetPassword, register, login, ResetPassword, authUser, activateAccount, assignRole, initActivation, addToWish, removewishlist, userwishlist, addPreference, removePreference, featuredAuthors, userPreference, preRecommendation } from '../controllers/auth.controllers'
 import passport from 'passport'
 import { addAuthorAchievement, createUserProfile, editUserProfile, getAuthorProfile, removeAuthorAchievement } from '../controllers/profile.controllers'
 import { upload } from '../middlewares/cloudinary'
@@ -355,6 +355,39 @@ AuthRouter.get('/callback/failure' , (req , res) => {
         message: 'Authentication failed'
     });
 })
+/**
+ * @swagger
+ * /auth/user/preference/recommend:
+ *   post:
+ *     summary: Add a user preference - preference(categoryid) through registration flow
+ *     tags: [Preferences]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bearer token for authorization
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               preferences:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: Preference added
+ *       401:
+ *         description: Unauthorized
+ */
+AuthRouter.post('/user/preference/recommend',preRecommendation)
 /**
  * @swagger
  * /auth/user/wishlist:
