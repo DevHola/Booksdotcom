@@ -68,7 +68,7 @@ const startApp = async () => {
    // await seedcategory()
    // await seedproducts()
    // await populateFormats()
-  await populateReviews()
+  // await populateReviews()
 }
 startApp()
 export default app

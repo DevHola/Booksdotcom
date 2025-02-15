@@ -285,6 +285,40 @@ export const assignRole = async (req: Request, res: Response, next: NextFunction
     }
   }
 }
+export const preRecommendation = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const errors = validationResult(req)
+  if(!errors.isEmpty()){
+      return res.status(400).json({
+          errors: errors.array()
+      })
+  }
+  try {
+    const category = req.body.preferences 
+    const token = await extractor(req)
+    const userId = await verifyVerificationToken(token)
+    const list = await addToPreference(userId, category as string[])
+    if(!list){
+      return res.status(400).json({
+        status: false,
+        message: "Category not added to wishlist",
+      })
+    }
+    return res.status(200).json({
+      status: true,
+      preferences: list.preferences
+    })
+  } catch (error) {
+    if(error instanceof Error){
+      if(error.message === 'user not found'){
+        return res.status(404).json({
+          message: 'user not found'
+        })
+      } else {
+        next(error)
+      }
+    }
+  }
+}
 export const addToWish = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const errors = validationResult(req)
   if(!errors.isEmpty()){

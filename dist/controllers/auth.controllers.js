@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.featuredAuthors = exports.userPreference = exports.removePreference = exports.addPreference = exports.userwishlist = exports.removewishlist = exports.addToWish = exports.assignRole = exports.activateAccount = exports.initActivation = exports.authUser = exports.ResetPassword = exports.forgetPassword = exports.login = exports.register = void 0;
+exports.featuredAuthors = exports.userPreference = exports.removePreference = exports.addPreference = exports.userwishlist = exports.removewishlist = exports.addToWish = exports.preRecommendation = exports.assignRole = exports.activateAccount = exports.initActivation = exports.authUser = exports.ResetPassword = exports.forgetPassword = exports.login = exports.register = void 0;
 const auth_services_1 = require("../services/auth.services");
 const express_validator_1 = require("express-validator");
 const delivermail_1 = require("../configs/delivermail");
@@ -308,6 +308,43 @@ const assignRole = async (req, res, next) => {
     }
 };
 exports.assignRole = assignRole;
+const preRecommendation = async (req, res, next) => {
+    const errors = (0, express_validator_1.validationResult)(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            errors: errors.array()
+        });
+    }
+    try {
+        const category = req.body.preferences;
+        const token = await (0, auth_services_1.extractor)(req);
+        const userId = await (0, auth_services_1.verifyVerificationToken)(token);
+        const list = await (0, auth_services_1.addToPreference)(userId, category);
+        if (!list) {
+            return res.status(400).json({
+                status: false,
+                message: "Category not added to wishlist",
+            });
+        }
+        return res.status(200).json({
+            status: true,
+            preferences: list.preferences
+        });
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            if (error.message === 'user not found') {
+                return res.status(404).json({
+                    message: 'user not found'
+                });
+            }
+            else {
+                next(error);
+            }
+        }
+    }
+};
+exports.preRecommendation = preRecommendation;
 const addToWish = async (req, res, next) => {
     const errors = (0, express_validator_1.validationResult)(req);
     if (!errors.isEmpty()) {
