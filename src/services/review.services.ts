@@ -1,6 +1,5 @@
 import RateModel, { IRating } from "../models/rating.model";
 export const createReview = async (rateNumber: number, review: string, product: string, user: string): Promise<IRating> => {
-    // const newreview = await new RateModel()
     return await RateModel.addAndUpdateReview(rateNumber, review, product, user) as IRating
 }
 export const getProductReview = async (productId:string): Promise<IRating[]> => {

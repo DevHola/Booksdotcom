@@ -1,4 +1,6 @@
+import { createReview } from "../../services/review.services";
 import CategoryModel, { ICategory } from "../category.model";
+import { IFormat } from "../format.model";
 import productModel, { IProduct } from "../product.model";
 const categories = [
     { name: "Fiction" },
@@ -90,6 +92,94 @@ const products = [
         user: '6792739e2226029550cfe0f2'
       }
     ]
+const DEFAULT_PRICES: { [key in 'ebook' | 'physical' | 'audiobook']: number } = {
+  ebook: 5000,
+  physical: 15000,
+  audiobook: 5000
+};
+export const populateFormats = async () => {
+  try {
+    const products = await productModel.find();
+    console.log(`Found ${products.length} products.`);
+
+    for (const product of products) {
+      const existingTypes = product.formats.map((format: IFormat) => format.type);
+
+      const formatsToAdd = (["ebook", "physical", "audiobook"] as Array<keyof typeof DEFAULT_PRICES>).filter(
+        (type) => !existingTypes.includes(type)
+      );
+
+      if (formatsToAdd.length > 0) {
+        const newFormats: Partial<IFormat>[] = formatsToAdd.map((type) => ({
+          type, // No need to cast explicitly
+          price: DEFAULT_PRICES[type],
+          downloadLink: type === "ebook" ? `https://download.example.com/${product._id}` : undefined,
+          stock: type === "physical" ? 100 : undefined,
+          product: product._id,
+        }));
+
+        // Push new formats into the product's formats array
+        product.formats.push(...(newFormats as IFormat[])); // Type assertion here
+
+        // Save the updated product
+        await product.save();
+        console.log(`Added ${newFormats.length} formats to product ${product._id}`);
+      }
+    }
+
+    console.log("Format population completed.");
+  } catch (error) {
+    console.error("Error populating formats:", error);
+  }
+};
+const reviews = {
+  bad: [
+    "Terrible quality, wouldn't recommend.",
+    "Not worth the money.",
+    "Very disappointed with this product.",
+    "I regret buying this.",
+    "Poor quality and bad experience."
+  ],
+  average: [
+    "It's okay, nothing special.",
+    "Decent, but has some flaws.",
+    "Average quality, could be better.",
+    "Not the best, but not the worst.",
+    "Fair for the price."
+  ],
+  good: [
+    "Great product! Exceeded my expectations.",
+    "Very satisfied, will buy again.",
+    "High quality and worth every penny!",
+    "Absolutely love it!",
+    "One of the best purchases I've made!"
+  ]
+};
+export const populateReviews = async () => {
+  try {
+    const products = await productModel.find();
+    console.log(`Found ${products.length} products.`);
+
+    for (const product of products) {
+      const rateNumber = Math.floor(Math.random() * 5) + 1; // Random rating between 1-5
+
+      // Select review based on rating
+      let review;
+      if (rateNumber <= 2) {
+        review = reviews.bad[Math.floor(Math.random() * reviews.bad.length)];
+      } else if (rateNumber === 3) {
+        review = reviews.average[Math.floor(Math.random() * reviews.average.length)];
+      } else {
+        review = reviews.good[Math.floor(Math.random() * reviews.good.length)];
+      }
+      await createReview(rateNumber, review, product._id, '679272e72226029550cfe0e6' )
+    }
+
+    console.log("Rating population completed.");
+  } catch (error) {
+    console.error("Error populating Rating:", error);
+  }
+};
 export const seedcategory = async () => {
     await CategoryModel.insertMany(categories)
     console.log('inserted')

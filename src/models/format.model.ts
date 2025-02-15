@@ -1,9 +1,9 @@
 import mongoose, {Document, Schema, Model, model} from "mongoose";
 export interface IFormat extends Document {
     type: String
-    price: Number
+    price: number
     downloadLink?: String
-    stock?: Number
+    stock?: number 
     product?: String 
 }
 export const formatSchema = new Schema<IFormat>({

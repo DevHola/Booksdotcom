@@ -16,7 +16,7 @@ import couponRouter from './routes/coupon.route'
 import payRouter from './routes/pay.route'
 import swaggerUi from 'swagger-ui-express'
 import swaggerJsdoc from 'swagger-jsdoc'
-import { seedcategory, seedproducts } from './models/seeders/seed'
+import { seedcategory, seedproducts, populateFormats, populateReviews } from './models/seeders/seed'
 import { options } from './configs/docs'
 const app: Application = express()
 app.use(cors({
@@ -67,6 +67,8 @@ const startApp = async () => {
   }
    // await seedcategory()
    // await seedproducts()
+   // await populateFormats()
+  await populateReviews()
 }
 startApp()
 export default app

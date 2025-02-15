@@ -3,7 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.seedproducts = exports.seedcategory = void 0;
+exports.seedproducts = exports.seedcategory = exports.populateReviews = exports.populateFormats = void 0;
+const review_services_1 = require("../../services/review.services");
 const category_model_1 = __importDefault(require("../category.model"));
 const product_model_1 = __importDefault(require("../product.model"));
 const categories = [
@@ -96,6 +97,89 @@ const products = [
         user: '6792739e2226029550cfe0f2'
     }
 ];
+const DEFAULT_PRICES = {
+    ebook: 5000,
+    physical: 15000,
+    audiobook: 5000
+};
+const populateFormats = async () => {
+    try {
+        const products = await product_model_1.default.find();
+        console.log(`Found ${products.length} products.`);
+        for (const product of products) {
+            const existingTypes = product.formats.map((format) => format.type);
+            const formatsToAdd = ["ebook", "physical", "audiobook"].filter((type) => !existingTypes.includes(type));
+            if (formatsToAdd.length > 0) {
+                const newFormats = formatsToAdd.map((type) => ({
+                    type, // No need to cast explicitly
+                    price: DEFAULT_PRICES[type],
+                    downloadLink: type === "ebook" ? `https://download.example.com/${product._id}` : undefined,
+                    stock: type === "physical" ? 100 : undefined,
+                    product: product._id,
+                }));
+                // Push new formats into the product's formats array
+                product.formats.push(...newFormats); // Type assertion here
+                // Save the updated product
+                await product.save();
+                console.log(`Added ${newFormats.length} formats to product ${product._id}`);
+            }
+        }
+        console.log("Format population completed.");
+    }
+    catch (error) {
+        console.error("Error populating formats:", error);
+    }
+};
+exports.populateFormats = populateFormats;
+const reviews = {
+    bad: [
+        "Terrible quality, wouldn't recommend.",
+        "Not worth the money.",
+        "Very disappointed with this product.",
+        "I regret buying this.",
+        "Poor quality and bad experience."
+    ],
+    average: [
+        "It's okay, nothing special.",
+        "Decent, but has some flaws.",
+        "Average quality, could be better.",
+        "Not the best, but not the worst.",
+        "Fair for the price."
+    ],
+    good: [
+        "Great product! Exceeded my expectations.",
+        "Very satisfied, will buy again.",
+        "High quality and worth every penny!",
+        "Absolutely love it!",
+        "One of the best purchases I've made!"
+    ]
+};
+const populateReviews = async () => {
+    try {
+        const products = await product_model_1.default.find();
+        console.log(`Found ${products.length} products.`);
+        for (const product of products) {
+            const rateNumber = Math.floor(Math.random() * 5) + 1; // Random rating between 1-5
+            // Select review based on rating
+            let review;
+            if (rateNumber <= 2) {
+                review = reviews.bad[Math.floor(Math.random() * reviews.bad.length)];
+            }
+            else if (rateNumber === 3) {
+                review = reviews.average[Math.floor(Math.random() * reviews.average.length)];
+            }
+            else {
+                review = reviews.good[Math.floor(Math.random() * reviews.good.length)];
+            }
+            await (0, review_services_1.createReview)(rateNumber, review, product._id, '679272e72226029550cfe0e6');
+        }
+        console.log("Rating population completed.");
+    }
+    catch (error) {
+        console.error("Error populating Rating:", error);
+    }
+};
+exports.populateReviews = populateReviews;
 const seedcategory = async () => {
     await category_model_1.default.insertMany(categories);
     console.log('inserted');

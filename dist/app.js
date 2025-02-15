@@ -44,6 +44,7 @@ const coupon_route_1 = __importDefault(require("./routes/coupon.route"));
 const pay_route_1 = __importDefault(require("./routes/pay.route"));
 const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
 const swagger_jsdoc_1 = __importDefault(require("swagger-jsdoc"));
+const seed_1 = require("./models/seeders/seed");
 const docs_1 = require("./configs/docs");
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
@@ -88,6 +89,8 @@ const startApp = async () => {
     }
     // await seedcategory()
     // await seedproducts()
+    // await populateFormats()
+    await (0, seed_1.populateReviews)();
 };
 startApp();
 exports.default = app;

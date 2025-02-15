@@ -330,21 +330,26 @@ AuthRouter.get('/', (req, res) => {
 AuthRouter.get('/google',
     passport.authenticate('google', { scope: [ 'email', 'profile' ]
   }));
-AuthRouter.get('/google/callback', passport.authenticate( 'google', {
-     session: false,
-     failureRedirect: '/callback/failure'
-  }), (req, res) => {
-    const {token, action, role} = req.user as {token: string, action: string, role?: string}
-    console.log(`${process.env.REGISTER_REDIRECT}`)
-    if (action === 'login' && role === 'user'){  
-     return res.redirect(`${process.env.USER_REDIRECT}?token=${token}`);
-    } else if(action === 'login' && role === 'creator'){
-      return res.redirect(`${process.env.CREATOR_REDIRECT}?token=${token}`);
+  AuthRouter.get('/google/callback', passport.authenticate('google', {
+    session: false,
+    failureRedirect: '/callback/failure'
+}), (req, res) => {
+    if (!req.user) {
+        return res.redirect('/callback/failure');
     }
-     else if (action === 'register'){
-      return res.redirect(`${process.env.REGISTER_REDIRECT}?token=${token}`);
+
+    const { token, action, role } = req.user as { token: string, action: string, role: string };
+
+    if (action === 'login' && role === 'user') {  
+        return res.redirect(`${process.env.USER_REDIRECT}?token=${token}`);
+    } else if (action === 'login' && role === 'creator') {
+        return res.redirect(`${process.env.CREATOR_REDIRECT}?token=${token}`);
+    } else if (action === 'register' && role === 'none') {
+        console.log(`${process.env.REGISTER_REDIRECT}`);
+        return res.redirect(`${process.env.REGISTER_REDIRECT}?token=${token}`);
     }
-  });
+    return res.redirect('/callback/failure');
+});
 AuthRouter.get('/callback/failure' , (req , res) => {
     res.status(401).json({
         message: 'Authentication failed'

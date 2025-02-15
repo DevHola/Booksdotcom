@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUserReviews = exports.editReview = exports.getsingleReview = exports.getProductReview = exports.createReview = void 0;
 const rating_model_1 = __importDefault(require("../models/rating.model"));
 const createReview = async (rateNumber, review, product, user) => {
-    // const newreview = await new RateModel()
     return await rating_model_1.default.addAndUpdateReview(rateNumber, review, product, user);
 };
 exports.createReview = createReview;
