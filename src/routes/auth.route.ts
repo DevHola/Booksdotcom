@@ -614,7 +614,7 @@ AuthRouter.get('/featured/authors', featuredAuthors)
  *       401:
  *         description: Unauthorized
  */
-AuthRouter.post('/author/profile', upload.array('img',1), profileValidation, passport.authenticate('jwt', { session: false }), authorization({role: ['creator']}), createUserProfile)
+AuthRouter.post('/author/profile', upload.array('img',1), profileValidation, createUserProfile)
 /**
  * @swagger
  * /auth/author/profile:

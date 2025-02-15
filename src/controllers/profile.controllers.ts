@@ -3,6 +3,7 @@ import { DecodedToken } from "../middlewares/passport";
 import { addAchievement, createProfile, editProfile, getProfile, removeAchievement } from "../services/profile.services";
 import { cloudinaryImageUploadMethod } from "../middlewares/cloudinary";
 import { validationResult } from "express-validator";
+import { extractor, verifyVerificationToken } from "../services/auth.services";
 
 export const createUserProfile = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
       const errors = validationResult(req)
@@ -12,12 +13,12 @@ export const createUserProfile = async (req: Request, res: Response, next: NextF
           })
       }
     try {
-        const user = req.user as DecodedToken
-        const id = user.id
+        const token = await extractor(req)
+        const userId = await verifyVerificationToken(token)
         const biography = req.body.biography
         const data: any = {
             biography: biography as string,
-            author: id
+            author: userId
         }
         if(Array.isArray(req.files) && req.files.length > 0){
             const urls = await cloudinaryImageUploadMethod(req.files, process.env.PRODUCTPROFILEFOLDER as string)

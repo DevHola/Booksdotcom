@@ -4,6 +4,7 @@ exports.removeAuthorAchievement = exports.addAuthorAchievement = exports.getAuth
 const profile_services_1 = require("../services/profile.services");
 const cloudinary_1 = require("../middlewares/cloudinary");
 const express_validator_1 = require("express-validator");
+const auth_services_1 = require("../services/auth.services");
 const createUserProfile = async (req, res, next) => {
     const errors = (0, express_validator_1.validationResult)(req);
     if (!errors.isEmpty()) {
@@ -12,12 +13,12 @@ const createUserProfile = async (req, res, next) => {
         });
     }
     try {
-        const user = req.user;
-        const id = user.id;
+        const token = await (0, auth_services_1.extractor)(req);
+        const userId = await (0, auth_services_1.verifyVerificationToken)(token);
         const biography = req.body.biography;
         const data = {
             biography: biography,
-            author: id
+            author: userId
         };
         if (Array.isArray(req.files) && req.files.length > 0) {
             const urls = await (0, cloudinary_1.cloudinaryImageUploadMethod)(req.files, process.env.PRODUCTPROFILEFOLDER);
